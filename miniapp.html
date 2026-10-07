@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>CPM Bot Panel</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg:        #0d0d0f;
+    --surface:   #161619;
+    --card:      #1c1c20;
+    --border:    #2a2a30;
+    --accent:    #7c5cfc;
+    --accent2:   #5c8dfc;
+    --green:     #2ecc71;
+    --yellow:    #f0b429;
+    --red:       #e74c3c;
+    --text:      #e8e8f0;
+    --muted:     #7a7a8c;
+    --radius:    14px;
+    --font:      'Inter', system-ui, sans-serif;
+    --mono:      'JetBrains Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 15px;
+    min-height: 100%;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    overscroll-behavior: none;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 100;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 18px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .header-logo {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .header-title {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    color: var(--text);
+  }
+  .header-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+  .header-user {
+    font-size: 12px;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-family: var(--mono);
+  }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex;
+    gap: 6px;
+    padding: 12px 18px;
+    background: var(--bg);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex-shrink: 0;
+    padding: 7px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: var(--font);
+    white-space: nowrap;
+  }
+  .tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .tab:hover:not(.active) {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  /* ── PAGE CONTENT ── */
+  .page { display: none; padding: 6px 18px 100px; }
+  .page.active { display: block; }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin: 18px 0 8px;
+  }
+
+  /* ── FEATURE GRID ── */
+  .feat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .feat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 14px;
+    cursor: pointer;
+    transition: border-color 0.18s, transform 0.15s;
+    position: relative;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .feat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--card-accent, var(--accent));
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .feat-card:active {
+    transform: scale(0.97);
+    border-color: var(--card-accent, var(--accent));
+  }
+  .feat-card:active::before { opacity: 1; }
+
+  .feat-icon { font-size: 26px; margin-bottom: 8px; display: block; }
+  .feat-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.3;
+  }
+  .feat-desc {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 3px;
+    line-height: 1.4;
+  }
+
+  /* ── INPUT PANEL (slide-up) ── */
+  .panel-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+  }
+  .panel-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .panel {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 201;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-radius: 20px 20px 0 0;
+    padding: 0 18px 32px;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    max-height: 88vh;
+    overflow-y: auto;
+  }
+  .panel.open { transform: translateY(0); }
+
+  .panel-drag {
+    width: 36px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 12px auto 16px;
+  }
+  .panel-title {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .panel-desc {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+
+  /* ── FORM ELEMENTS ── */
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  input[type="text"], input[type="email"], input[type="password"], textarea {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 11px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 14px;
+    -webkit-appearance: none;
+  }
+  input:focus, textarea:focus {
+    border-color: var(--accent);
+  }
+  textarea { resize: vertical; min-height: 80px; font-size: 12px; }
+
+  .radio-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .radio-btn {
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: var(--font);
+  }
+  .radio-btn.selected {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.15s;
+    font-family: var(--font);
+    margin-top: 4px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn:active { opacity: 0.85; transform: scale(0.98); }
+  .btn.secondary {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    margin-top: 8px;
+  }
+  .btn.danger {
+    background: var(--red);
+  }
+
+  /* ── STATUS TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 300;
+    opacity: 0;
+    transition: all 0.3s;
+    white-space: nowrap;
+    pointer-events: none;
+    max-width: 90vw;
+    text-align: center;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .toast.success { border-color: var(--green); color: var(--green); }
+  .toast.error   { border-color: var(--red); color: var(--red); }
+  .toast.info    { border-color: var(--accent); color: var(--accent); }
+
+  /* ── INFO CARDS ── */
+  .info-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 13px;
+  }
+  .info-row:not(:last-child) {
+    border-bottom: 1px solid var(--border);
+  }
+  .info-key { color: var(--muted); }
+  .info-val {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text);
+    font-weight: 600;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--mono);
+  }
+  .badge-green  { background: rgba(46,204,113,.15); color: var(--green); }
+  .badge-yellow { background: rgba(240,180,41,.15); color: var(--yellow); }
+  .badge-purple { background: rgba(124,92,252,.15); color: var(--accent); }
+  .badge-red    { background: rgba(231,76,60,.15);  color: var(--red); }
+
+  /* ── HOME STATS BAR ── */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .stat-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 10px;
+    text-align: center;
+  }
+  .stat-val {
+    font-size: 18px;
+    font-weight: 700;
+    font-family: var(--mono);
+    color: var(--text);
+  }
+  .stat-lbl {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  /* ── NOTICE BOX ── */
+  .notice {
+    background: rgba(124,92,252,.1);
+    border: 1px solid rgba(124,92,252,.25);
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-size: 12.5px;
+    color: var(--text);
+    line-height: 1.55;
+    margin-bottom: 12px;
+  }
+  .notice strong { color: var(--accent); }
+
+  /* ── STORE CARD ── */
+  .store-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .store-card:active { border-color: var(--accent); }
+  .store-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+  .store-info { flex: 1; min-width: 0; }
+  .store-name { font-size: 14px; font-weight: 600; }
+  .store-price { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .store-arrow { color: var(--muted); font-size: 18px; }
+
+  /* ── FILE UPLOAD ── */
+  .file-drop {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    margin-bottom: 14px;
+    position: relative;
+  }
+  .file-drop:hover { border-color: var(--accent); }
+  .file-drop input[type="file"] {
+    position: absolute; inset: 0;
+    opacity: 0; cursor: pointer;
+    width: 100%; height: 100%;
+  }
+  .file-drop-icon { font-size: 28px; display: block; margin-bottom: 6px; }
+  .file-name { font-size: 12px; color: var(--accent); margin-top: 4px; }
+
+  /* ── HELP PAGE ── */
+  .help-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    cursor: pointer;
+  }
+  .help-q {
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .help-a {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-top: 8px;
+    line-height: 1.6;
+    display: none;
+  }
+  .help-item.open .help-a { display: block; }
+  .help-chevron { transition: transform 0.2s; }
+  .help-item.open .help-chevron { transform: rotate(180deg); }
+
+  /* ── BOTTOM NAV ── */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    bottom: env(safe-area-inset-bottom, 0px);
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    z-index: 100;
+  }
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 4px 8px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.15s;
+    color: var(--muted);
+    font-size: 10px;
+    gap: 4px;
+  }
+  .nav-item.active { color: var(--accent); }
+  .nav-icon { font-size: 22px; display: block; }
+
+  /* ── PROGRESS ── */
+  .progress-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 8px 0;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 2px;
+    transition: width 0.4s;
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 0; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-brand">
+    <div class="header-logo">🚗</div>
+    <div>
+      <div class="header-title">CPM Bot Panel</div>
+      <div class="header-sub">Car Parking Multiplayer</div>
+    </div>
+  </div>
+  <div class="header-user" id="userLabel">Guest</div>
+</div>
+
+<!-- TABS (sub-nav for features) -->
+<div class="tabs" id="featureTabs" style="display:none;">
+  <button class="tab active" onclick="filterFeats('all')">All</button>
+  <button class="tab" onclick="filterFeats('account')">Accounts</button>
+  <button class="tab" onclick="filterFeats('coins')">Coins</button>
+  <button class="tab" onclick="filterFeats('transfer')">Transfer</button>
+  <button class="tab" onclick="filterFeats('other')">Other</button>
+</div>
+
+<!-- ── HOME PAGE ── -->
+<div class="page active" id="page-home">
+  <div class="section-label">Your Status</div>
+  <div class="stats-bar">
+    <div class="stat-box">
+      <div class="stat-val" id="statRuns">—</div>
+      <div class="stat-lbl">Runs Today</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val" id="statCoins">—</div>
+      <div class="stat-lbl">Coins</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val" id="statAccess">—</div>
+      <div class="stat-lbl">Access</div>
+    </div>
+  </div>
+
+  <div class="notice">
+    <strong>ℹ️ How it works</strong><br>
+    Tap any feature, fill in your details, and the action is sent to the bot. Results are delivered back in Telegram chat.
+  </div>
+
+  <div class="section-label">Quick Actions</div>
+  <div class="feat-grid">
+    <div class="feat-card" style="--card-accent:#2ecc71" onclick="openPanel('coins')">
+      <span class="feat-icon">🪙</span>
+      <div class="feat-name">Coins Farming</div>
+      <div class="feat-desc">Farm coins automatically</div>
+    </div>
+    <div class="feat-card" style="--card-accent:#f0b429" onclick="openPanel('money50m')">
+      <span class="feat-icon">💰</span>
+      <div class="feat-name">Add 50M Money</div>
+      <div class="feat-desc">Inject 50M to CPM2</div>
+    </div>
+    <div class="feat-card" style="--card-accent:#5c8dfc" onclick="openPanel('createcpm2')">
+      <span class="feat-icon">👤</span>
+      <div class="feat-name">Create CPM2</div>
+      <div class="feat-desc">New CPM2 account</div>
+    </div>
+    <div class="feat-card" style="--card-accent:#e74c3c" onclick="openPanel('mileage')">
+      <span class="feat-icon">🛞</span>
+      <div class="feat-name">Mileage Reset</div>
+      <div class="feat-desc">Reset mileage counter</div>
+    </div>
+  </div>
+
+  <div class="section-label">Contact</div>
+  <div class="info-card">
+    <div class="info-row">
+      <span class="feat-desc">Owner</span>
+      <span class="badge badge-purple">@imal4n</span>
+    </div>
+    <div class="info-row">
+      <span class="feat-desc">Bot support</span>
+      <span class="info-val">Telegram DM</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── FEATURES PAGE ── -->
+<div class="page" id="page-features">
+  <div class="feat-grid" id="featGrid">
+
+    <!-- Account features -->
+    <div class="feat-card" data-cat="account" style="--card-accent:#5c8dfc" onclick="openPanel('createcpm2')">
+      <span class="feat-icon">👤</span>
+      <div class="feat-name">Create CPM2 Account</div>
+      <div class="feat-desc">Register new CPM2 account</div>
+    </div>
+    <div class="feat-card" data-cat="account" style="--card-accent:#5c8dfc" onclick="openPanel('createcpm1')">
+      <span class="feat-icon">🆕</span>
+      <div class="feat-name">Create CPM1 Account</div>
+      <div class="feat-desc">Register new CPM1 account</div>
+    </div>
+    <div class="feat-card" data-cat="account" style="--card-accent:#e67e22" onclick="openPanel('cpm2changer')">
+      <span class="feat-icon">✏️</span>
+      <div class="feat-name">CPM2 Changer</div>
+      <div class="feat-desc">Change email/password</div>
+    </div>
+    <div class="feat-card" data-cat="account" style="--card-accent:#e67e22" onclick="openPanel('cpm1changer')">
+      <span class="feat-icon">🔄</span>
+      <div class="feat-name">CPM1 Changer</div>
+      <div class="feat-desc">Change CPM1 credentials</div>
+    </div>
+
+    <!-- Coins features -->
+    <div class="feat-card" data-cat="coins" style="--card-accent:#2ecc71" onclick="openPanel('coins')">
+      <span class="feat-icon">🪙</span>
+      <div class="feat-name">Coins Farming</div>
+      <div class="feat-desc">Auto-farm coins</div>
+    </div>
+    <div class="feat-card" data-cat="coins" style="--card-accent:#f0b429" onclick="openPanel('money50m')">
+      <span class="feat-icon">💰</span>
+      <div class="feat-name">Add 50M Money</div>
+      <div class="feat-desc">Inject money to CPM2</div>
+    </div>
+
+    <!-- Transfer features -->
+    <div class="feat-card" data-cat="transfer" style="--card-accent:#9b59b6" onclick="openPanel('cpm1tocpm2')">
+      <span class="feat-icon">🔀</span>
+      <div class="feat-name">CPM1 → CPM2</div>
+      <div class="feat-desc">Transfer between games</div>
+    </div>
+    <div class="feat-card" data-cat="transfer" style="--card-accent:#9b59b6" onclick="openPanel('cpm2tocpm2')">
+      <span class="feat-icon">↔️</span>
+      <div class="feat-name">CPM2 → CPM2</div>
+      <div class="feat-desc">Transfer between CPM2</div>
+    </div>
+    <div class="feat-card" data-cat="transfer" style="--card-accent:#8e44ad" onclick="openPanel('viptransfer')">
+      <span class="feat-icon">🏆</span>
+      <div class="feat-name">VIP Vinyl Transfer</div>
+      <div class="feat-desc">Move VIP car vinyls</div>
+    </div>
+    <div class="feat-card" data-cat="transfer" style="--card-accent:#8e44ad" onclick="openPanel('kingrank')">
+      <span class="feat-icon">👑</span>
+      <div class="feat-name">King Rank</div>
+      <div class="feat-desc">Set max game rank</div>
+    </div>
+
+    <!-- Other features -->
+    <div class="feat-card" data-cat="other" style="--card-accent:#1abc9c" onclick="openPanel('decrypt')">
+      <span class="feat-icon">🔓</span>
+      <div class="feat-name">Decrypt ES3</div>
+      <div class="feat-desc">Decrypt save file</div>
+    </div>
+    <div class="feat-card" data-cat="other" style="--card-accent:#1abc9c" onclick="openPanel('showpassword')">
+      <span class="feat-icon">🔑</span>
+      <div class="feat-name">Show Password</div>
+      <div class="feat-desc">Recover ES3 password</div>
+    </div>
+    <div class="feat-card" data-cat="other" style="--card-accent:#16a085" onclick="openPanel('localmods')">
+      <span class="feat-icon">✨</span>
+      <div class="feat-name">Air / Police / Bodykits</div>
+      <div class="feat-desc">Unlock local mods</div>
+    </div>
+    <div class="feat-card" data-cat="other" style="--card-accent:#e74c3c" onclick="openPanel('mileage')">
+      <span class="feat-icon">🛞</span>
+      <div class="feat-name">Mileage Reset</div>
+      <div class="feat-desc">Reset mileage counter</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── STORE PAGE ── -->
+<div class="page" id="page-store">
+  <div class="section-label">Available Packages</div>
+  <div class="notice">
+    <strong>🛒 Store</strong><br>
+    Purchase accounts and packages. Pay with Telegram Stars or USDT via Binance Pay.
+  </div>
+
+  <div class="store-card" onclick="openPanel('store-basic')">
+    <div class="store-icon">🥉</div>
+    <div class="store-info">
+      <div class="store-name">Basic Package</div>
+      <div class="store-price">Starter accounts • Stars or USDT</div>
+    </div>
+    <div class="store-arrow">›</div>
+  </div>
+  <div class="store-card" onclick="openPanel('store-pro')">
+    <div class="store-icon">🥈</div>
+    <div class="store-info">
+      <div class="store-name">Pro Package</div>
+      <div class="store-price">Premium accounts • Stars or USDT</div>
+    </div>
+    <div class="store-arrow">›</div>
+  </div>
+  <div class="store-card" onclick="openPanel('store-vip')">
+    <div class="store-icon">🥇</div>
+    <div class="store-info">
+      <div class="store-name">VIP Package</div>
+      <div class="store-price">Max-loaded accounts • Stars or USDT</div>
+    </div>
+    <div class="store-arrow">›</div>
+  </div>
+
+  <div class="section-label">Payment Methods</div>
+  <div class="info-card">
+    <div class="info-row">
+      <span class="info-key">⭐ Telegram Stars</span>
+      <span class="badge badge-green">Active</span>
+    </div>
+    <div class="info-row">
+      <span class="info-key">💳 USDT Binance</span>
+      <span class="badge badge-green">Active</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── HELP PAGE ── -->
+<div class="page" id="page-help">
+  <div class="section-label">Frequently Asked</div>
+
+  <div class="help-item" onclick="toggleHelp(this)">
+    <div class="help-q">What is CPM1 / CPM2? <span class="help-chevron">▾</span></div>
+    <div class="help-a">CPM1 = Car Parking Multiplayer 1 (older version). CPM2 = Car Parking Multiplayer 2 (new version). Different features apply to each game.</div>
+  </div>
+  <div class="help-item" onclick="toggleHelp(this)">
+    <div class="help-q">What is an ES3 file? <span class="help-chevron">▾</span></div>
+    <div class="help-a">ES3 is the save file format used by Car Parking Multiplayer. You can export it from the game's settings and upload it here for decryption or modification.</div>
+  </div>
+  <div class="help-item" onclick="toggleHelp(this)">
+    <div class="help-q">How do I farm coins? <span class="help-chevron">▾</span></div>
+    <div class="help-a">Go to Features → Coins Farming. Enter your CPM2 email and password, choose farming mode (MAX / DRAG / COMBO / BOTH), and the bot will farm automatically. Results are sent to your Telegram chat.</div>
+  </div>
+  <div class="help-item" onclick="toggleHelp(this)">
+    <div class="help-q">What does VIP Vinyl Transfer do? <span class="help-chevron">▾</span></div>
+    <div class="help-a">It moves a VIP car's vinyl (custom paint/design) from one account to another. Useful for keeping a design on a new account.</div>
+  </div>
+  <div class="help-item" onclick="toggleHelp(this)">
+    <div class="help-q">How do I buy from the Store? <span class="help-chevron">▾</span></div>
+    <div class="help-a">Tap the Store tab, choose a package, and follow the steps. You'll pay with Telegram Stars or USDT (Binance Pay) and get your account credentials sent to your chat.</div>
+  </div>
+  <div class="help-item" onclick="toggleHelp(this)">
+    <div class="help-q">My run limit says 0 / 0 — what to do? <span class="help-chevron">▾</span></div>
+    <div class="help-a">Contact @imal4n on Telegram to top up your lifetime run quota. Your access may have expired or never been granted.</div>
+  </div>
+  <div class="help-item" onclick="toggleHelp(this)">
+    <div class="help-q">I got an error — who do I contact? <span class="help-chevron">▾</span></div>
+    <div class="help-a">Message @imal4n directly on Telegram with a screenshot of the error message. Include your Telegram ID if possible.</div>
+  </div>
+
+  <div class="section-label">Bot Info</div>
+  <div class="info-card">
+    <div class="info-row"><span class="info-key">Support</span><span class="info-val">@imal4n</span></div>
+    <div class="info-row"><span class="info-key">Game</span><span class="info-val">Car Parking Multiplayer</span></div>
+    <div class="info-row"><span class="info-key">Version</span><span class="badge badge-purple">v5</span></div>
+  </div>
+</div>
+
+<!-- ── PANEL OVERLAY ── -->
+<div class="panel-overlay" id="overlay" onclick="closePanel()"></div>
+
+<!-- ── INPUT PANEL ── -->
+<div class="panel" id="panel">
+  <div class="panel-drag"></div>
+  <div id="panelContent"></div>
+</div>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast"></div>
+
+<!-- ── BOTTOM NAV ── -->
+<div class="bottom-nav">
+  <div class="nav-item active" onclick="navTo('home', this)">
+    <span class="nav-icon">🏠</span>Home
+  </div>
+  <div class="nav-item" onclick="navTo('features', this)">
+    <span class="nav-icon">⚙️</span>Features
+  </div>
+  <div class="nav-item" onclick="navTo('store', this)">
+    <span class="nav-icon">🛒</span>Store
+  </div>
+  <div class="nav-item" onclick="navTo('help', this)">
+    <span class="nav-icon">❓</span>Help
+  </div>
+</div>
+
+<script>
+/* ── Telegram WebApp init ── */
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand();
+  tg.setHeaderColor('#0d0d0f');
+  tg.setBackgroundColor('#0d0d0f');
+}
+
+const user = tg?.initDataUnsafe?.user;
+if (user) {
+  const name = user.username ? '@' + user.username : (user.first_name || 'User');
+  document.getElementById('userLabel').textContent = name;
+}
+
+/* ── NAV ── */
+function navTo(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  el.classList.add('active');
+  const ft = document.getElementById('featureTabs');
+  ft.style.display = id === 'features' ? 'flex' : 'none';
+}
+
+/* ── FEATURE FILTER ── */
+function filterFeats(cat) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.querySelectorAll('#featGrid .feat-card').forEach(c => {
+    c.style.display = (cat === 'all' || c.dataset.cat === cat) ? '' : 'none';
+  });
+}
+
+/* ── PANEL DEFINITIONS ── */
+const panels = {
+
+  coins: {
+    title: '🪙 Coins Farming',
+    desc: 'Auto-farm coins on your CPM2 account. Results sent to your chat.',
+    html: `
+      <label>Email</label>
+      <input type="email" id="f_email" placeholder="your@email.com" autocomplete="off"/>
+      <label>Password</label>
+      <input type="password" id="f_pass" placeholder="••••••••"/>
+      <label>Farming Mode</label>
+      <div class="radio-group">
+        <button class="radio-btn selected" onclick="selMode(this,'MAX')">MAX</button>
+        <button class="radio-btn" onclick="selMode(this,'DRAG')">DRAG</button>
+        <button class="radio-btn" onclick="selMode(this,'COMBO')">COMBO</button>
+        <button class="radio-btn" onclick="selMode(this,'BOTH')">BOTH</button>
+      </div>
+      <label>Rounds (1–50)</label>
+      <input type="text" id="f_rounds" placeholder="5" value="5"/>
+      <button class="btn" onclick="sendAction('coins')">▶ Start Farming</button>
+    `,
+  },
+
+  money50m: {
+    title: '💰 Add 50M Money',
+    desc: 'Inject 50,000,000 money into your CPM2 account.',
+    html: `
+      <label>CPM2 Email</label>
+      <input type="email" id="f_email" placeholder="your@email.com"/>
+      <label>CPM2 Password</label>
+      <input type="password" id="f_pass" placeholder="••••••••"/>
+      <button class="btn" onclick="sendAction('money50m')">💰 Inject 50M Money</button>
+    `,
+  },
+
+  createcpm2: {
+    title: '👤 Create CPM2 Account',
+    desc: 'Generate a new Car Parking Multiplayer 2 account with max money and coins.',
+    html: `
+      <div class="notice" style="margin-bottom:16px">Account will be created automatically with <strong>50M money</strong> and <strong>30K coins</strong>.</div>
+      <label>Count (1–10)</label>
+      <input type="text" id="f_count" placeholder="1" value="1"/>
+      <button class="btn" onclick="sendAction('createcpm2')">✨ Create Account</button>
+    `,
+  },
+
+  createcpm1: {
+    title: '🆕 Create CPM1 Account',
+    desc: 'Generate a new CPM1 account with max items and king rank.',
+    html: `
+      <div class="notice" style="margin-bottom:16px">Account will be created with max rank, all cars, and 50M money.</div>
+      <label>Count (1–5)</label>
+      <input type="text" id="f_count" placeholder="1" value="1"/>
+      <button class="btn" onclick="sendAction('createcpm1')">🆕 Create CPM1 Account</button>
+    `,
+  },
+
+  cpm1tocpm2: {
+    title: '🔀 CPM1 → CPM2 Transfer',
+    desc: 'Transfer car data from CPM1 save file to a CPM2 account.',
+    html: `
+      <label>CPM1 Save File (ES3)</label>
+      <div class="file-drop" id="fileDropA">
+        <input type="file" accept=".es3,.json" onchange="setFile(this,'fileDropA','f_file_a')"/>
+        <span class="file-drop-icon">📁</span>
+        <span>Tap to upload ES3 file</span>
+        <div class="file-name" id="f_file_a_name"></div>
+      </div>
+      <label>CPM2 Email</label>
+      <input type="email" id="f_email" placeholder="your@email.com"/>
+      <label>CPM2 Password</label>
+      <input type="password" id="f_pass" placeholder="••••••••"/>
+      <button class="btn" onclick="sendAction('cpm1tocpm2')">🔀 Start Transfer</button>
+    `,
+  },
+
+  cpm2tocpm2: {
+    title: '↔️ CPM2 → CPM2 Transfer',
+    desc: 'Transfer cars between two CPM2 accounts.',
+    html: `
+      <label>Source Email</label>
+      <input type="email" id="f_src_email" placeholder="source@email.com"/>
+      <label>Source Password</label>
+      <input type="password" id="f_src_pass" placeholder="••••••••"/>
+      <label>Destination Email</label>
+      <input type="email" id="f_dst_email" placeholder="dest@email.com"/>
+      <label>Destination Password</label>
+      <input type="password" id="f_dst_pass" placeholder="••••••••"/>
+      <button class="btn" onclick="sendAction('cpm2tocpm2')">↔️ Transfer Cars</button>
+    `,
+  },
+
+  viptransfer: {
+    title: '🏆 VIP Vinyl Transfer',
+    desc: 'Move VIP car vinyl design from one account to another.',
+    html: `
+      <label>Source CPM2 Email</label>
+      <input type="email" id="f_src_email" placeholder="source@email.com"/>
+      <label>Source Password</label>
+      <input type="password" id="f_src_pass" placeholder="••••••••"/>
+      <label>Destination CPM2 Email</label>
+      <input type="email" id="f_dst_email" placeholder="dest@email.com"/>
+      <label>Destination Password</label>
+      <input type="password" id="f_dst_pass" placeholder="••••••••"/>
+      <button class="btn" onclick="sendAction('viptransfer')">🏆 Transfer VIP Vinyl</button>
+    `,
+  },
+
+  kingrank: {
+    title: '👑 King Rank',
+    desc: 'Set maximum king rank on your CPM2 account.',
+    html: `
+      <label>CPM2 Email</label>
+      <input type="email" id="f_email" placeholder="your@email.com"/>
+      <label>Password</label>
+      <input type="password" id="f_pass" placeholder="••••••••"/>
+      <button class="btn" onclick="sendAction('kingrank')">👑 Set King Rank</button>
+    `,
+  },
+
+  decrypt: {
+    title: '🔓 Decrypt ES3',
+    desc: 'Decrypt your game save file and get the raw JSON data.',
+    html: `
+      <label>Game Type</label>
+      <div class="radio-group">
+        <button class="radio-btn selected" onclick="selMode(this,'CPM1')">CPM1</button>
+        <button class="radio-btn" onclick="selMode(this,'CPM2')">CPM2</button>
+      </div>
+      <label>ES3 Save File</label>
+      <div class="file-drop" id="fileDropD">
+        <input type="file" accept=".es3" onchange="setFile(this,'fileDropD','f_file_d')"/>
+        <span class="file-drop-icon">📁</span>
+        <span>Tap to upload ES3 file</span>
+        <div class="file-name" id="f_file_d_name"></div>
+      </div>
+      <label>Email</label>
+      <input type="email" id="f_email" placeholder="your@email.com"/>
+      <label>Password</label>
+      <input type="password" id="f_pass" placeholder="••••••••"/>
+      <button class="btn" onclick="sendAction('decrypt')">🔓 Decrypt File</button>
+    `,
+  },
+
+  showpassword: {
+    title: '🔑 Show ES3 Password',
+    desc: 'Recover the encryption password from your ES3 save file.',
+    html: `
+      <label>Game Type</label>
+      <div class="radio-group">
+        <button class="radio-btn selected" onclick="selMode(this,'CPM1')">CPM1</button>
+        <button class="radio-btn" onclick="selMode(this,'CPM2')">CPM2</button>
+      </div>
+      <label>ES3 Save File</label>
+      <div class="file-drop" id="fileDropS">
+        <input type="file" accept=".es3" onchange="setFile(this,'fileDropS','f_file_s')"/>
+        <span class="file-drop-icon">📁</span>
+        <span>Tap to upload ES3 file</span>
+        <div class="file-name" id="f_file_s_name"></div>
+      </div>
+      <label>Email</label>
+      <input type="email" id="f_email" placeholder="your@email.com"/>
+      <button class="btn" onclick="sendAction('showpassword')">🔑 Reveal Password</button>
+    `,
+  },
+
+  localmods: {
+    title: '✨ Air / Police / Bodykits',
+    desc: 'Unlock local mods like air suspension, police lights, and bodykits.',
+    html: `
+      <label>Mod Type</label>
+      <div class="radio-group">
+        <button class="radio-btn selected" onclick="selMode(this,'air')">Air</button>
+        <button class="radio-btn" onclick="selMode(this,'police')">Police</button>
+        <button class="radio-btn" onclick="selMode(this,'bodykits')">Bodykits</button>
+        <button class="radio-btn" onclick="selMode(this,'all')">All</button>
+      </div>
+      <label>ES3 Save File</label>
+      <div class="file-drop" id="fileDropM">
+        <input type="file" accept=".es3" onchange="setFile(this,'fileDropM','f_file_m')"/>
+        <span class="file-drop-icon">📁</span>
+        <span>Tap to upload ES3 file</span>
+        <div class="file-name" id="f_file_m_name"></div>
+      </div>
+      <button class="btn" onclick="sendAction('localmods')">✨ Apply Mods</button>
+    `,
+  },
+
+  mileage: {
+    title: '🛞 Mileage Reset',
+    desc: 'Reset the mileage counter on your game account.',
+    html: `
+      <label>Game Type</label>
+      <div class="radio-group">
+        <button class="radio-btn selected" onclick="selMode(this,'CPM1')">CPM1</button>
+        <button class="radio-btn" onclick="selMode(this,'CPM2')">CPM2</button>
+      </div>
+      <label>Email</label>
+      <input type="email" id="f_email" placeholder="your@email.com"/>
+      <label>Password</label>
+      <input type="password" id="f_pass" placeholder="••••••••"/>
+      <button class="btn" onclick="sendAction('mileage')">🛞 Reset Mileage</button>
+    `,
+  },
+
+  cpm2changer: {
+    title: '✏️ CPM2 Email/Password Changer',
+    desc: 'Change email or password on a CPM2 account.',
+    html: `
+      <label>Current Email</label>
+      <input type="email" id="f_email" placeholder="current@email.com"/>
+      <label>Current Password</label>
+      <input type="password" id="f_pass" placeholder="Current password"/>
+      <label>New Email</label>
+      <input type="email" id="f_new_email" placeholder="new@email.com"/>
+      <label>New Password</label>
+      <input type="password" id="f_new_pass" placeholder="New password"/>
+      <button class="btn" onclick="sendAction('cpm2changer')">✏️ Change Credentials</button>
+    `,
+  },
+
+  cpm1changer: {
+    title: '🔄 CPM1 Changer',
+    desc: 'Change email or password on a CPM1 account.',
+    html: `
+      <label>Current Email</label>
+      <input type="email" id="f_email" placeholder="current@email.com"/>
+      <label>Current Password</label>
+      <input type="password" id="f_pass" placeholder="Current password"/>
+      <label>New Email</label>
+      <input type="email" id="f_new_email" placeholder="new@email.com"/>
+      <label>New Password</label>
+      <input type="password" id="f_new_pass" placeholder="New password"/>
+      <button class="btn" onclick="sendAction('cpm1changer')">🔄 Change Credentials</button>
+    `,
+  },
+
+  'store-basic': {
+    title: '🥉 Basic Package',
+    desc: 'Starter CPM2 account. Contact @imal4n after purchase to confirm.',
+    html: `
+      <div class="info-card" style="margin-bottom:16px">
+        <div class="info-row"><span class="info-key">Includes</span><span class="info-val">CPM2 Account</span></div>
+        <div class="info-row"><span class="info-key">Money</span><span class="info-val">50M</span></div>
+        <div class="info-row"><span class="info-key">Coins</span><span class="info-val">30,000</span></div>
+        <div class="info-row"><span class="info-key">Payment</span><span class="badge badge-green">Stars / USDT</span></div>
+      </div>
+      <label>Payment Method</label>
+      <div class="radio-group">
+        <button class="radio-btn selected" onclick="selMode(this,'stars')">⭐ Stars</button>
+        <button class="radio-btn" onclick="selMode(this,'usdt')">💳 USDT</button>
+      </div>
+      <button class="btn" onclick="sendAction('store-buy','basic')">🛒 Buy Basic Package</button>
+    `,
+  },
+
+  'store-pro': {
+    title: '🥈 Pro Package',
+    desc: 'Premium CPM2 account with extra features. Contact @imal4n after purchase.',
+    html: `
+      <div class="info-card" style="margin-bottom:16px">
+        <div class="info-row"><span class="info-key">Includes</span><span class="info-val">CPM2 + VIP Cars</span></div>
+        <div class="info-row"><span class="info-key">Money</span><span class="info-val">50M</span></div>
+        <div class="info-row"><span class="info-key">Coins</span><span class="info-val">30,000</span></div>
+        <div class="info-row"><span class="info-key">Payment</span><span class="badge badge-green">Stars / USDT</span></div>
+      </div>
+      <label>Payment Method</label>
+      <div class="radio-group">
+        <button class="radio-btn selected" onclick="selMode(this,'stars')">⭐ Stars</button>
+        <button class="radio-btn" onclick="selMode(this,'usdt')">💳 USDT</button>
+      </div>
+      <button class="btn" onclick="sendAction('store-buy','pro')">🛒 Buy Pro Package</button>
+    `,
+  },
+
+  'store-vip': {
+    title: '🥇 VIP Package',
+    desc: 'Max-loaded CPM2 account with king rank and VIP vinyls.',
+    html: `
+      <div class="info-card" style="margin-bottom:16px">
+        <div class="info-row"><span class="info-key">Includes</span><span class="info-val">VIP Full Account</span></div>
+        <div class="info-row"><span class="info-key">Rank</span><span class="badge badge-yellow">King Rank</span></div>
+        <div class="info-row"><span class="info-key">Money</span><span class="info-val">50M</span></div>
+        <div class="info-row"><span class="info-key">Payment</span><span class="badge badge-green">Stars / USDT</span></div>
+      </div>
+      <label>Payment Method</label>
+      <div class="radio-group">
+        <button class="radio-btn selected" onclick="selMode(this,'stars')">⭐ Stars</button>
+        <button class="radio-btn" onclick="selMode(this,'usdt')">💳 USDT</button>
+      </div>
+      <label>Transaction ID (after payment)</label>
+      <input type="text" id="f_txid" placeholder="Paste your TXID here (USDT only)"/>
+      <button class="btn" onclick="sendAction('store-buy','vip')">🛒 Buy VIP Package</button>
+    `,
+  },
+};
+
+/* ── SELECTED MODE STATE ── */
+let selectedMode = '';
+
+function selMode(btn, val) {
+  btn.closest('.radio-group').querySelectorAll('.radio-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedMode = val;
+}
+
+/* ── FILE HANDLING ── */
+const fileStore = {};
+
+function setFile(input, dropId, key) {
+  const f = input.files[0];
+  if (!f) return;
+  fileStore[key] = f;
+  const nameEl = document.getElementById(key + '_name');
+  if (nameEl) nameEl.textContent = '📎 ' + f.name;
+}
+
+/* ── OPEN / CLOSE PANEL ── */
+function openPanel(id, extra) {
+  const cfg = panels[id];
+  if (!cfg) return;
+  selectedMode = '';
+  const pc = document.getElementById('panelContent');
+  pc.innerHTML = `
+    <div class="panel-title">${cfg.title}</div>
+    <div class="panel-desc">${cfg.desc}</div>
+    ${cfg.html}
+    <button class="btn secondary" onclick="closePanel()">✕ Cancel</button>
+  `;
+  // Set initial mode from first selected radio
+  const first = pc.querySelector('.radio-btn.selected');
+  if (first) selectedMode = first.textContent.trim();
+
+  document.getElementById('panel').classList.add('open');
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  // Store extra context
+  document.getElementById('panel').dataset.extra = extra || '';
+  document.getElementById('panel').dataset.action = id;
+}
+
+function closePanel() {
+  document.getElementById('panel').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+/* ── SEND ACTION TO BOT ── */
+function sendAction(action, extra) {
+  const get = id => (document.getElementById(id)?.value || '').trim();
+
+  let payload = { action, mode: selectedMode };
+
+  if (action === 'coins') {
+    const email = get('f_email'), pass = get('f_pass'), rounds = get('f_rounds');
+    if (!email || !pass) { showToast('Enter email and password', 'error'); return; }
+    payload = { action, email, password: pass, mode: selectedMode || 'MAX', rounds: rounds || '5' };
+  } else if (action === 'money50m') {
+    const email = get('f_email'), pass = get('f_pass');
+    if (!email || !pass) { showToast('Enter email and password', 'error'); return; }
+    payload = { action, email, password: pass };
+  } else if (action === 'createcpm2') {
+    payload = { action, count: get('f_count') || '1' };
+  } else if (action === 'createcpm1') {
+    payload = { action, count: get('f_count') || '1' };
+  } else if (action === 'cpm1tocpm2') {
+    const email = get('f_email'), pass = get('f_pass');
+    if (!email || !pass) { showToast('Enter CPM2 credentials', 'error'); return; }
+    payload = { action, email, password: pass };
+  } else if (action === 'cpm2tocpm2' || action === 'viptransfer') {
+    const se = get('f_src_email'), sp = get('f_src_pass'), de = get('f_dst_email'), dp = get('f_dst_pass');
+    if (!se || !sp || !de || !dp) { showToast('Fill all 4 fields', 'error'); return; }
+    payload = { action, src_email: se, src_password: sp, dst_email: de, dst_password: dp };
+  } else if (action === 'kingrank' || action === 'mileage') {
+    const email = get('f_email'), pass = get('f_pass');
+    if (!email || !pass) { showToast('Enter email and password', 'error'); return; }
+    payload = { action, email, password: pass, game_type: selectedMode || 'CPM2' };
+  } else if (action === 'decrypt' || action === 'showpassword') {
+    const email = get('f_email'), pass = get('f_pass');
+    if (!email) { showToast('Enter email', 'error'); return; }
+    payload = { action, email, password: pass, game_type: selectedMode || 'CPM1' };
+  } else if (action === 'localmods') {
+    payload = { action, mod_type: selectedMode || 'all' };
+  } else if (action === 'cpm2changer' || action === 'cpm1changer') {
+    const email = get('f_email'), pass = get('f_pass'), ne = get('f_new_email'), np = get('f_new_pass');
+    if (!email || !pass || !ne || !np) { showToast('Fill all fields', 'error'); return; }
+    payload = { action, email, password: pass, new_email: ne, new_password: np };
+  } else if (action === 'store-buy') {
+    payload = { action, package: extra, payment_method: selectedMode || 'stars', txid: get('f_txid') || '' };
+  }
+
+  // Send to bot via Telegram sendData
+  try {
+    if (tg && tg.sendData) {
+      tg.sendData(JSON.stringify(payload));
+      closePanel();
+      showToast('✅ Sent to bot!', 'success');
+    } else {
+      // Fallback: show what would be sent (for testing outside Telegram)
+      closePanel();
+      showToast('⚠️ Open in Telegram to use', 'info');
+      console.log('[Mini App] Would send:', payload);
+    }
+  } catch(e) {
+    showToast('❌ ' + e.message, 'error');
+  }
+}
+
+/* ── TOAST ── */
+function showToast(msg, type = 'info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type + ' show';
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+/* ── HELP ACCORDION ── */
+function toggleHelp(el) {
+  el.classList.toggle('open');
+}
+
+/* ── SIMULATE STATS (in real use, these come from bot via initData) ── */
+(function initStats() {
+  // These would be populated from tg.initDataUnsafe or a bot API call
+  document.getElementById('statRuns').textContent = '—';
+  document.getElementById('statCoins').textContent = '—';
+  document.getElementById('statAccess').textContent = user ? '✓' : '—';
+})();
+</script>
+</body>
+</html>

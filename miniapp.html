@@ -1,1292 +1,575 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<title>CPM Bot Panel</title>
+<html lang="en" data-th="gold"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>CPM Panel</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+:root{--g1:#ffe28a;--g2:#ff9a3d;--gl:255,150,60;--bg:#0e0f12;--card:#17191e;--card2:#1f2229;--line:#2a2e37;--tx:#f2f4f7;--mu:#8b92a1;--bad:#ff5d6c;--ok:#3ddc84;
+--st:max(12px,env(safe-area-inset-top));--sb:max(16px,env(safe-area-inset-bottom))}
+html[data-th=blue]{--g1:#a8c8ff;--g2:#5b8cff;--gl:90,130,255}
+html[data-th=green]{--g1:#b8ffd8;--g2:#2fe0a8;--gl:47,224,168}
+html[data-th=red]{--g1:#ffc0cf;--g2:#ff4d6d;--gl:255,77,109}
+html[data-th=silver]{--g1:#ffffff;--g2:#aab4c8;--gl:200,210,235}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg)}
+html,body{color:var(--tx);font:15px/1.4 -apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior:none}
+body{padding:var(--st) 16px calc(var(--sb) + 8px);min-height:100vh;background:transparent}
+button{font:inherit;cursor:pointer;border:0;color:inherit;background:none}
+.top{display:flex;align-items:center;justify-content:space-between;padding:12px 2px 10px}
+.hi small{display:block;color:var(--mu);font-size:13px}
+.hi b{font-size:26px;letter-spacing:-.6px;color:var(--g1)}
+.th{display:flex;gap:9px}
+.th button{width:22px;height:22px;border-radius:50%;box-shadow:0 0 0 1.5px rgba(255,255,255,.2);transition:transform .2s}
+.th button.on{box-shadow:0 0 0 2px #fff;transform:scale(1.15)}
+.banner{margin:6px 0 12px;padding:10px 12px;border-radius:12px;border:1px solid var(--bad);background:rgba(255,93,108,.1);font-size:13px}
+.tabs{display:flex;gap:8px;overflow-x:auto;margin:6px 0 14px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;padding:8px 15px;border-radius:99px;background:var(--card);border:1px solid var(--line);color:var(--mu);font-size:14px;font-weight:600}
+.tab.on{background:linear-gradient(90deg,var(--g1),var(--g2));color:#1a1000;border-color:transparent}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.item{position:relative;text-align:left;min-height:132px;padding:14px;border-radius:18px;display:flex;flex-direction:column;gap:6px;overflow:hidden;
+background:radial-gradient(150px 110px at 0 0,rgba(var(--gl),.16),transparent 70%),linear-gradient(145deg,rgba(255,255,255,.12),rgba(255,255,255,.035));
+border:1px solid rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.28);transition:transform .15s;animation:up .35s ease both;animation-delay:calc(var(--i)*30ms)}
+.item:active{transform:scale(.96)}
+.item.vip{border-color:rgba(var(--gl),.7);box-shadow:0 0 18px rgba(var(--gl),.25),inset 0 1px 0 rgba(255,255,255,.28)}
+.item b{font-size:15px;letter-spacing:-.2px;background:linear-gradient(90deg,#fff,var(--g1));-webkit-background-clip:text;background-clip:text;color:transparent}
+.item>span:last-child{color:var(--mu);font-size:12.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.badge{position:absolute;top:11px;right:12px;font-size:10px;font-weight:800;letter-spacing:.8px;padding:4px 9px;border-radius:99px;background:linear-gradient(90deg,var(--g1),var(--g2));color:#2a1a00}
+.ic{width:54px;height:54px;border-radius:17px;display:grid;place-items:center;margin-bottom:4px;background:linear-gradient(145deg,var(--g1),var(--g2));box-shadow:0 3px 8px rgba(var(--gl),.3),inset 0 1.5px 0 rgba(255,255,255,.6)}
+.ic svg{width:28px;height:28px;fill:none;stroke:#1a0f00;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ic svg .f{fill:rgba(255,255,255,.5)}
+@keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity .25s;z-index:10}
+.ov.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:11;background:rgba(20,22,27,.98);border-radius:26px 26px 0 0;padding:10px 18px calc(var(--sb) + 6px);transform:translateY(105%);transition:transform .28s cubic-bezier(.2,.9,.25,1);max-height:90vh;overflow:auto;border-top:1px solid rgba(255,255,255,.18)}
+.sheet.on{transform:none}
+.grab{width:40px;height:4px;border-radius:9px;background:var(--line);margin:0 auto 14px}
+.x{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.09);display:grid;place-items:center;color:var(--mu)}
+.x svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
+.sh{display:flex;gap:12px;align-items:center;margin-bottom:6px;padding-right:44px}
+.sh .ic{margin:0}
+.sh h2{font-size:19px;letter-spacing:-.3px}
+.desc{color:var(--mu);font-size:13.5px;margin-bottom:6px}
+label.l{display:block;font-size:12.5px;color:var(--mu);font-weight:600;margin:12px 0 6px}
+input,select,textarea{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);border-radius:12px;padding:13px;color:var(--tx);font:inherit;font-size:15px;outline:0}
+select option{background:#1f2229}
+input:focus,select:focus,textarea:focus{border-color:var(--g2);box-shadow:0 0 0 3px rgba(var(--gl),.18)}
+input.err,select.err,textarea.err{border-color:var(--bad)}
+input[type=file]{border-style:dashed;padding:11px;font-size:13.5px}
+textarea{font:13px/1.45 ui-monospace,Menlo,monospace;resize:vertical;min-height:130px}
+.pw{position:relative}.pw input{padding-right:46px}
+.eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:10px;color:var(--mu);display:grid;place-items:center}
+.eye svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.chk{display:flex;align-items:center;gap:10px;margin:10px 0;font-size:14.5px}
+.chk input{width:20px;height:20px;accent-color:var(--g2);flex:none}
+.seg{display:flex;gap:8px;margin:6px 0 4px}
+.seg button{flex:1;padding:10px;border-radius:10px;border:1px solid var(--line);color:var(--mu);font-weight:600}
+.seg button.on{background:rgba(var(--gl),.18);border-color:var(--g2);color:var(--tx)}
+.row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.pick{flex:1;margin:0;padding:11px;border-radius:10px;border:1px dashed #555;text-align:center;color:#ddd;font-size:13.5px;cursor:pointer}
+.cnt{font-size:12px;color:var(--mu);white-space:nowrap}
+.go{width:100%;margin-top:18px;background:linear-gradient(90deg,var(--g1),var(--g2));color:#1a1000;border-radius:14px;padding:15px;font-size:16px;font-weight:800}
+.go:active{transform:scale(.98)}
+.go:disabled{opacity:.65}
+.note{margin-top:10px;font-size:12px;color:var(--mu);text-align:center}
+.res{margin-top:14px;padding:12px;border-radius:12px;background:var(--card);border:1px solid var(--bad)}
+.res.ok{border-color:#2f7d4f}
+.res pre{white-space:pre-wrap;word-break:break-word;font:12.5px/1.5 ui-monospace,Menlo,monospace;max-height:260px;overflow:auto;user-select:text;-webkit-user-select:text}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.acts button{padding:9px 12px;border-radius:10px;border:1px solid #444;background:var(--card2);font-size:13.5px}
+.rows{display:flex;flex-direction:column;gap:6px;max-height:230px;overflow:auto;margin-top:6px}
+.rw{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);font-size:14px}
+.rw.on{border-color:var(--g2);background:rgba(var(--gl),.14)}
+.rw.dis{opacity:.45}
+.rw input{width:18px;height:18px;flex:none;accent-color:var(--g2)}
+.rw small{margin-left:auto;color:var(--mu);font-size:11.5px;white-space:nowrap}
+.toast{position:fixed;left:50%;top:calc(var(--st) + 8px);transform:translate(-50%,-140%);background:var(--card2);border:1px solid var(--line);padding:11px 16px;border-radius:12px;font-size:14px;z-index:20;transition:transform .3s;max-width:90%}
+.toast.on{transform:translate(-50%,0)}.toast.bad{border-color:var(--bad)}
 
-  :root {
-    --bg:        #0d0d0f;
-    --surface:   #161619;
-    --card:      #1c1c20;
-    --border:    #2a2a30;
-    --accent:    #7c5cfc;
-    --accent2:   #5c8dfc;
-    --green:     #2ecc71;
-    --yellow:    #f0b429;
-    --red:       #e74c3c;
-    --text:      #e8e8f0;
-    --muted:     #7a7a8c;
-    --radius:    14px;
-    --font:      'Inter', system-ui, sans-serif;
-    --mono:      'JetBrains Mono', monospace;
-  }
+/* ══ EFFECTS ══ (static ones always on; heavy ones only inside html.fx, which the FPS guard / ✨ button controls) */
+@property --ang{syntax:"<angle>";initial-value:0deg;inherits:false}
+#bgx{position:fixed;inset:0;z-index:-2;pointer-events:none;overflow:hidden;
+background:radial-gradient(70% 38% at 50% -6%,rgba(var(--gl),.24),transparent 70%),radial-gradient(45% 28% at 100% 32%,rgba(124,92,255,.14),transparent 70%),radial-gradient(45% 28% at 0 62%,rgba(34,211,238,.11),transparent 70%),radial-gradient(60% 34% at 50% 108%,rgba(var(--gl),.18),transparent 70%),radial-gradient(rgba(255,255,255,.075) 1px,transparent 1.3px) 0 0/22px 22px}
+#bgx::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 50%,transparent 55%,rgba(0,0,0,.55))}
+.au{position:absolute;width:75vw;height:75vw;max-width:520px;max-height:520px;border-radius:50%;background:radial-gradient(circle,rgba(var(--gl),.34),transparent 65%);will-change:transform;display:none}
+.a1{top:-22vw;left:-24vw}.a2{bottom:-28vw;right:-26vw;opacity:.8}
+html.fx .au{display:block;animation:au1 18s ease-in-out infinite alternate}
+html.fx .a2{animation-name:au2;animation-duration:22s}
+@keyframes au1{to{transform:translate3d(30vw,16vw,0) scale(1.25)}}
+@keyframes au2{to{transform:translate3d(-28vw,-18vw,0) scale(1.2)}}
+#pt{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;display:none}
+html.fx #pt{display:block}
+#pt i{position:absolute;bottom:-10px;border-radius:50%;background:rgba(var(--gl),.85);opacity:0;will-change:transform,opacity;animation:rise linear infinite}
+@keyframes rise{0%{transform:translate3d(0,0,0);opacity:0}15%{opacity:.85}100%{transform:translate3d(var(--dx),-105vh,0);opacity:0}}
+body.so #pt i,body.so .au{animation-play-state:paused}
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* cards */
+.item::after{content:"";position:absolute;inset:0;background:radial-gradient(130px circle at var(--mx,50%) var(--my,50%),rgba(var(--gl),.22),transparent 70%);opacity:0;transition:opacity .2s;pointer-events:none}
+.item:active::after{opacity:1}
+.item.done:not(.vip){animation:none;opacity:1}
+.rip{position:absolute;border-radius:50%;width:10px;height:10px;margin:-5px 0 0 -5px;background:rgba(var(--gl),.5);pointer-events:none;animation:rip .6s ease-out forwards}
+@keyframes rip{to{transform:scale(28);opacity:0}}
+.spk{position:absolute;font-size:12px;opacity:0;display:none;pointer-events:none;color:var(--g1)}
+@keyframes tw{0%,100%{opacity:0;transform:scale(.4)}50%{opacity:1;transform:scale(1) rotate(20deg)}}
+@keyframes sweep2{0%{transform:translateX(-90px) skewX(-20deg)}45%,100%{transform:translateX(340px) skewX(-20deg)}}
+@keyframes float{50%{transform:translateY(-4px) rotate(-4deg)}}
+html.fx .item:not(.vip)::before{content:"";position:absolute;top:0;bottom:0;left:0;width:46px;background:linear-gradient(100deg,transparent,rgba(255,255,255,.14),transparent);transform:translateX(-90px) skewX(-20deg);animation:sweep2 5s ease-in-out infinite;animation-delay:calc(var(--i)*.45s);will-change:transform;pointer-events:none}
+html.fx .item .ic{animation:float 3s ease-in-out infinite;animation-delay:calc(var(--i)*.25s)}
+html.fx .item:not(.vip) .spk{display:block;animation:tw 2.4s ease-in-out infinite;animation-delay:calc(var(--i)*.3s)}
 
-  html, body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font);
-    font-size: 15px;
-    min-height: 100%;
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    overscroll-behavior: none;
-  }
+/* VIP card: spinning rainbow border, glow, shimmer, sparkles */
+@keyframes spin{to{--ang:360deg}}
+@keyframes glow{0%,100%{box-shadow:0 0 18px rgba(var(--gl),.18)}50%{box-shadow:0 0 34px rgba(var(--gl),.4),0 0 60px rgba(var(--gl),.14)}}
+.item.vip{border:1.5px solid transparent;
+background:linear-gradient(#17140b,#100e08) padding-box,conic-gradient(from var(--ang),var(--g1),var(--g2),#ff4fd8,#7a5cff,#35e0ff,var(--g1)) border-box;
+animation:up .35s ease both,spin 5s linear infinite,glow 2.8s ease-in-out infinite;animation-delay:0s}
+.item.vip::before{content:"";position:absolute;top:0;bottom:0;left:0;width:46px;background:linear-gradient(100deg,transparent,rgba(255,255,255,.22),transparent);transform:translateX(-90px) skewX(-20deg);animation:sweep2 4s ease-in-out infinite;will-change:transform;pointer-events:none}
+.item.vip .spk{display:block;animation:tw 2.4s ease-in-out infinite}
+.item.vip .ic{animation:float 2.6s ease-in-out infinite}
+.item.vip b{background:linear-gradient(90deg,var(--g1),var(--g2),#ff4fd8);-webkit-background-clip:text;background-clip:text;color:transparent}
 
-  /* ── HEADER ── */
-  .header {
-    position: sticky;
-    top: env(safe-area-inset-top, 0px);
-    z-index: 100;
-    background: var(--bg);
-    border-bottom: 1px solid var(--border);
-    padding: 14px 18px 12px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-  }
-  .header-brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .header-logo {
-    width: 36px; height: 36px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-  }
-  .header-title {
-    font-size: 16px;
-    font-weight: 700;
-    letter-spacing: -0.3px;
-    color: var(--text);
-  }
-  .header-sub {
-    font-size: 11px;
-    color: var(--muted);
-    margin-top: 1px;
-  }
-  .header-user {
-    font-size: 12px;
-    color: var(--muted);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 5px 10px;
-    font-family: var(--mono);
-  }
+/* sheet */
+.sheet::before{content:"";position:absolute;top:0;left:10%;right:10%;height:2px;background:linear-gradient(90deg,transparent,var(--g2),var(--g1),transparent)}
+.sheet.vipS{box-shadow:0 -10px 50px rgba(var(--gl),.25)}
+.sheet.vipS .go{background:linear-gradient(90deg,var(--g1),var(--g2),#ff4fd8,var(--g1));background-size:200% 100%;animation:flow 3s linear infinite}
+@keyframes flow{to{background-position:200% 0}}
+.sheet.vipS .sh h2{background:linear-gradient(90deg,var(--g1),var(--g2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sheet.on #sForm>*{animation:up .4s cubic-bezier(.2,.9,.25,1) both}
+.sheet.on #sForm>*:nth-child(1){animation-delay:.08s}.sheet.on #sForm>*:nth-child(2){animation-delay:.12s}.sheet.on #sForm>*:nth-child(3){animation-delay:.16s}
+.sheet.on #sForm>*:nth-child(4){animation-delay:.2s}.sheet.on #sForm>*:nth-child(5){animation-delay:.24s}.sheet.on #sForm>*:nth-child(n+6){animation-delay:.28s}
+.go{position:relative;overflow:hidden}
+.go.sent{animation:pop .5s ease}
+@keyframes pop{40%{transform:scale(1.05);box-shadow:0 0 40px rgba(var(--gl),.7)}}
 
-  /* ── TABS ── */
-  .tabs {
-    display: flex;
-    gap: 6px;
-    padding: 12px 18px;
-    background: var(--bg);
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .tabs::-webkit-scrollbar { display: none; }
-  .tab {
-    flex-shrink: 0;
-    padding: 7px 14px;
-    border-radius: 20px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--muted);
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-family: var(--font);
-    white-space: nowrap;
-  }
-  .tab.active {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
-  }
-  .tab:hover:not(.active) {
-    border-color: var(--accent);
-    color: var(--text);
-  }
+/* theme wave, typed greeting, fx button */
+.wave{position:fixed;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;background:rgba(var(--gl),.4);pointer-events:none;z-index:30;animation:wv .85s ease-out forwards}
+@keyframes wv{to{transform:scale(80);opacity:0}}
+.cur{border-right:2px solid var(--g2);animation:blink .6s steps(1) infinite}
+@keyframes blink{50%{border-color:transparent}}
+.th{align-items:center}
+.th .fxb{width:auto;height:24px;padding:0 9px;border-radius:99px;background:var(--card2);box-shadow:0 0 0 1.5px rgba(255,255,255,.2);font-size:12px;opacity:.5}
+.th .fxb.on{opacity:1;transform:none;box-shadow:0 0 0 1.5px var(--g2)}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+</style></head><body>
+<div id="pt"></div>
+<div id="bgx"><i class="au a1"></i><i class="au a2"></i></div>
 
-  /* ── PAGE CONTENT ── */
-  .page { display: none; padding: 6px 18px 100px; }
-  .page.active { display: block; }
-
-  /* ── SECTION LABEL ── */
-  .section-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--muted);
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    margin: 18px 0 8px;
-  }
-
-  /* ── FEATURE GRID ── */
-  .feat-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-
-  .feat-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px 14px;
-    cursor: pointer;
-    transition: border-color 0.18s, transform 0.15s;
-    position: relative;
-    overflow: hidden;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .feat-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: var(--card-accent, var(--accent));
-    opacity: 0;
-    transition: opacity 0.2s;
-  }
-  .feat-card:active {
-    transform: scale(0.97);
-    border-color: var(--card-accent, var(--accent));
-  }
-  .feat-card:active::before { opacity: 1; }
-
-  .feat-icon { font-size: 26px; margin-bottom: 8px; display: block; }
-  .feat-name {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
-    line-height: 1.3;
-  }
-  .feat-desc {
-    font-size: 11px;
-    color: var(--muted);
-    margin-top: 3px;
-    line-height: 1.4;
-  }
-
-  /* ── INPUT PANEL (slide-up) ── */
-  .panel-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    z-index: 200;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.25s;
-  }
-  .panel-overlay.open {
-    opacity: 1;
-    pointer-events: all;
-  }
-  .panel {
-    position: fixed;
-    left: 0; right: 0; bottom: 0;
-    z-index: 201;
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    border-radius: 20px 20px 0 0;
-    padding: 0 18px 32px;
-    transform: translateY(100%);
-    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
-    max-height: 88vh;
-    overflow-y: auto;
-  }
-  .panel.open { transform: translateY(0); }
-
-  .panel-drag {
-    width: 36px; height: 4px;
-    background: var(--border);
-    border-radius: 2px;
-    margin: 12px auto 16px;
-  }
-  .panel-title {
-    font-size: 17px;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-  .panel-desc {
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 20px;
-    line-height: 1.5;
-  }
-
-  /* ── FORM ELEMENTS ── */
-  label {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--muted);
-    margin-bottom: 5px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  input[type="text"], input[type="email"], input[type="password"], textarea {
-    width: 100%;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 13px;
-    padding: 11px 14px;
-    outline: none;
-    transition: border-color 0.2s;
-    margin-bottom: 14px;
-    -webkit-appearance: none;
-  }
-  input:focus, textarea:focus {
-    border-color: var(--accent);
-  }
-  textarea { resize: vertical; min-height: 80px; font-size: 12px; }
-
-  .radio-group {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-bottom: 16px;
-  }
-  .radio-btn {
-    padding: 7px 14px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: var(--card);
-    color: var(--muted);
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s;
-    font-family: var(--font);
-  }
-  .radio-btn.selected {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
-  }
-
-  .btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
-    padding: 14px;
-    border-radius: 12px;
-    border: none;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    color: #fff;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: opacity 0.15s, transform 0.15s;
-    font-family: var(--font);
-    margin-top: 4px;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .btn:active { opacity: 0.85; transform: scale(0.98); }
-  .btn.secondary {
-    background: var(--card);
-    border: 1px solid var(--border);
-    color: var(--text);
-    margin-top: 8px;
-  }
-  .btn.danger {
-    background: var(--red);
-  }
-
-  /* ── STATUS TOAST ── */
-  .toast {
-    position: fixed;
-    bottom: 90px;
-    left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 10px 18px;
-    font-size: 13px;
-    font-weight: 500;
-    z-index: 300;
-    opacity: 0;
-    transition: all 0.3s;
-    white-space: nowrap;
-    pointer-events: none;
-    max-width: 90vw;
-    text-align: center;
-  }
-  .toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-  .toast.success { border-color: var(--green); color: var(--green); }
-  .toast.error   { border-color: var(--red); color: var(--red); }
-  .toast.info    { border-color: var(--accent); color: var(--accent); }
-
-  /* ── INFO CARDS ── */
-  .info-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-    margin-bottom: 10px;
-  }
-  .info-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 6px 0;
-    font-size: 13px;
-  }
-  .info-row:not(:last-child) {
-    border-bottom: 1px solid var(--border);
-  }
-  .info-key { color: var(--muted); }
-  .info-val {
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--text);
-    font-weight: 600;
-  }
-  .badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 6px;
-    font-size: 11px;
-    font-weight: 600;
-    font-family: var(--mono);
-  }
-  .badge-green  { background: rgba(46,204,113,.15); color: var(--green); }
-  .badge-yellow { background: rgba(240,180,41,.15); color: var(--yellow); }
-  .badge-purple { background: rgba(124,92,252,.15); color: var(--accent); }
-  .badge-red    { background: rgba(231,76,60,.15);  color: var(--red); }
-
-  /* ── HOME STATS BAR ── */
-  .stats-bar {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 6px;
-  }
-  .stat-box {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 12px 10px;
-    text-align: center;
-  }
-  .stat-val {
-    font-size: 18px;
-    font-weight: 700;
-    font-family: var(--mono);
-    color: var(--text);
-  }
-  .stat-lbl {
-    font-size: 10px;
-    color: var(--muted);
-    margin-top: 2px;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-  }
-
-  /* ── NOTICE BOX ── */
-  .notice {
-    background: rgba(124,92,252,.1);
-    border: 1px solid rgba(124,92,252,.25);
-    border-radius: 10px;
-    padding: 11px 14px;
-    font-size: 12.5px;
-    color: var(--text);
-    line-height: 1.55;
-    margin-bottom: 12px;
-  }
-  .notice strong { color: var(--accent); }
-
-  /* ── STORE CARD ── */
-  .store-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    cursor: pointer;
-    transition: border-color 0.2s;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .store-card:active { border-color: var(--accent); }
-  .store-icon {
-    width: 48px; height: 48px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    display: flex; align-items: center; justify-content: center;
-    font-size: 24px;
-    flex-shrink: 0;
-  }
-  .store-info { flex: 1; min-width: 0; }
-  .store-name { font-size: 14px; font-weight: 600; }
-  .store-price { font-size: 12px; color: var(--muted); margin-top: 3px; }
-  .store-arrow { color: var(--muted); font-size: 18px; }
-
-  /* ── FILE UPLOAD ── */
-  .file-drop {
-    border: 2px dashed var(--border);
-    border-radius: 12px;
-    padding: 24px;
-    text-align: center;
-    color: var(--muted);
-    font-size: 13px;
-    cursor: pointer;
-    transition: border-color 0.2s;
-    margin-bottom: 14px;
-    position: relative;
-  }
-  .file-drop:hover { border-color: var(--accent); }
-  .file-drop input[type="file"] {
-    position: absolute; inset: 0;
-    opacity: 0; cursor: pointer;
-    width: 100%; height: 100%;
-  }
-  .file-drop-icon { font-size: 28px; display: block; margin-bottom: 6px; }
-  .file-name { font-size: 12px; color: var(--accent); margin-top: 4px; }
-
-  /* ── HELP PAGE ── */
-  .help-item {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 14px 16px;
-    margin-bottom: 8px;
-    cursor: pointer;
-  }
-  .help-q {
-    font-size: 13px;
-    font-weight: 600;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .help-a {
-    font-size: 12.5px;
-    color: var(--muted);
-    margin-top: 8px;
-    line-height: 1.6;
-    display: none;
-  }
-  .help-item.open .help-a { display: block; }
-  .help-chevron { transition: transform 0.2s; }
-  .help-item.open .help-chevron { transform: rotate(180deg); }
-
-  /* ── BOTTOM NAV ── */
-  .bottom-nav {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    bottom: env(safe-area-inset-bottom, 0px);
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    display: flex;
-    z-index: 100;
-  }
-  .nav-item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 4px 8px;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-    transition: color 0.15s;
-    color: var(--muted);
-    font-size: 10px;
-    gap: 4px;
-  }
-  .nav-item.active { color: var(--accent); }
-  .nav-icon { font-size: 22px; display: block; }
-
-  /* ── PROGRESS ── */
-  .progress-bar {
-    height: 4px;
-    background: var(--border);
-    border-radius: 2px;
-    overflow: hidden;
-    margin: 8px 0;
-  }
-  .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-    border-radius: 2px;
-    transition: width 0.4s;
-  }
-
-  /* scrollbar */
-  ::-webkit-scrollbar { width: 0; }
-</style>
-</head>
-<body>
-
-<!-- HEADER -->
-<div class="header">
-  <div class="header-brand">
-    <div class="header-logo">🚗</div>
-    <div>
-      <div class="header-title">CPM Bot Panel</div>
-      <div class="header-sub">Car Parking Multiplayer</div>
-    </div>
-  </div>
-  <div class="header-user" id="userLabel">Guest</div>
+<div class="top">
+  <div class="hi"><small>Welcome</small><b id="name">Hi there</b></div>
+  <div class="th" id="th"></div>
 </div>
+<div class="banner" id="banner" hidden></div>
+<div class="tabs" id="tabs"></div>
+<div class="grid" id="grid"></div>
 
-<!-- TABS (sub-nav for features) -->
-<div class="tabs" id="featureTabs" style="display:none;">
-  <button class="tab active" onclick="filterFeats('all')">All</button>
-  <button class="tab" onclick="filterFeats('account')">Accounts</button>
-  <button class="tab" onclick="filterFeats('coins')">Coins</button>
-  <button class="tab" onclick="filterFeats('transfer')">Transfer</button>
-  <button class="tab" onclick="filterFeats('other')">Other</button>
+<div class="ov" id="ov"></div>
+<div class="sheet" id="sheet">
+  <div class="grab"></div>
+  <button class="x" id="cl" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <div class="sh"><span class="ic" id="sIc"></span><h2 id="sTitle"></h2></div>
+  <p class="desc" id="sDesc"></p>
+  <div id="sForm"></div>
+  <button class="go" id="go"></button>
+  <p class="note" id="sNote"></p>
+  <div id="sRes"></div>
 </div>
-
-<!-- ── HOME PAGE ── -->
-<div class="page active" id="page-home">
-  <div class="section-label">Your Status</div>
-  <div class="stats-bar">
-    <div class="stat-box">
-      <div class="stat-val" id="statRuns">—</div>
-      <div class="stat-lbl">Runs Today</div>
-    </div>
-    <div class="stat-box">
-      <div class="stat-val" id="statCoins">—</div>
-      <div class="stat-lbl">Coins</div>
-    </div>
-    <div class="stat-box">
-      <div class="stat-val" id="statAccess">—</div>
-      <div class="stat-lbl">Access</div>
-    </div>
-  </div>
-
-  <div class="notice">
-    <strong>ℹ️ How it works</strong><br>
-    Tap any feature, fill in your details, and the action is sent to the bot. Results are delivered back in Telegram chat.
-  </div>
-
-  <div class="section-label">Quick Actions</div>
-  <div class="feat-grid">
-    <div class="feat-card" style="--card-accent:#2ecc71" onclick="openPanel('coins')">
-      <span class="feat-icon">🪙</span>
-      <div class="feat-name">Coins Farming</div>
-      <div class="feat-desc">Farm coins automatically</div>
-    </div>
-    <div class="feat-card" style="--card-accent:#f0b429" onclick="openPanel('money50m')">
-      <span class="feat-icon">💰</span>
-      <div class="feat-name">Add 50M Money</div>
-      <div class="feat-desc">Inject 50M to CPM2</div>
-    </div>
-    <div class="feat-card" style="--card-accent:#5c8dfc" onclick="openPanel('createcpm2')">
-      <span class="feat-icon">👤</span>
-      <div class="feat-name">Create CPM2</div>
-      <div class="feat-desc">New CPM2 account</div>
-    </div>
-    <div class="feat-card" style="--card-accent:#e74c3c" onclick="openPanel('mileage')">
-      <span class="feat-icon">🛞</span>
-      <div class="feat-name">Mileage Reset</div>
-      <div class="feat-desc">Reset mileage counter</div>
-    </div>
-  </div>
-
-  <div class="section-label">Contact</div>
-  <div class="info-card">
-    <div class="info-row">
-      <span class="feat-desc">Owner</span>
-      <span class="badge badge-purple">@imal4n</span>
-    </div>
-    <div class="info-row">
-      <span class="feat-desc">Bot support</span>
-      <span class="info-val">Telegram DM</span>
-    </div>
-  </div>
-</div>
-
-<!-- ── FEATURES PAGE ── -->
-<div class="page" id="page-features">
-  <div class="feat-grid" id="featGrid">
-
-    <!-- Account features -->
-    <div class="feat-card" data-cat="account" style="--card-accent:#5c8dfc" onclick="openPanel('createcpm2')">
-      <span class="feat-icon">👤</span>
-      <div class="feat-name">Create CPM2 Account</div>
-      <div class="feat-desc">Register new CPM2 account</div>
-    </div>
-    <div class="feat-card" data-cat="account" style="--card-accent:#5c8dfc" onclick="openPanel('createcpm1')">
-      <span class="feat-icon">🆕</span>
-      <div class="feat-name">Create CPM1 Account</div>
-      <div class="feat-desc">Register new CPM1 account</div>
-    </div>
-    <div class="feat-card" data-cat="account" style="--card-accent:#e67e22" onclick="openPanel('cpm2changer')">
-      <span class="feat-icon">✏️</span>
-      <div class="feat-name">CPM2 Changer</div>
-      <div class="feat-desc">Change email/password</div>
-    </div>
-    <div class="feat-card" data-cat="account" style="--card-accent:#e67e22" onclick="openPanel('cpm1changer')">
-      <span class="feat-icon">🔄</span>
-      <div class="feat-name">CPM1 Changer</div>
-      <div class="feat-desc">Change CPM1 credentials</div>
-    </div>
-
-    <!-- Coins features -->
-    <div class="feat-card" data-cat="coins" style="--card-accent:#2ecc71" onclick="openPanel('coins')">
-      <span class="feat-icon">🪙</span>
-      <div class="feat-name">Coins Farming</div>
-      <div class="feat-desc">Auto-farm coins</div>
-    </div>
-    <div class="feat-card" data-cat="coins" style="--card-accent:#f0b429" onclick="openPanel('money50m')">
-      <span class="feat-icon">💰</span>
-      <div class="feat-name">Add 50M Money</div>
-      <div class="feat-desc">Inject money to CPM2</div>
-    </div>
-
-    <!-- Transfer features -->
-    <div class="feat-card" data-cat="transfer" style="--card-accent:#9b59b6" onclick="openPanel('cpm1tocpm2')">
-      <span class="feat-icon">🔀</span>
-      <div class="feat-name">CPM1 → CPM2</div>
-      <div class="feat-desc">Transfer between games</div>
-    </div>
-    <div class="feat-card" data-cat="transfer" style="--card-accent:#9b59b6" onclick="openPanel('cpm2tocpm2')">
-      <span class="feat-icon">↔️</span>
-      <div class="feat-name">CPM2 → CPM2</div>
-      <div class="feat-desc">Transfer between CPM2</div>
-    </div>
-    <div class="feat-card" data-cat="transfer" style="--card-accent:#8e44ad" onclick="openPanel('viptransfer')">
-      <span class="feat-icon">🏆</span>
-      <div class="feat-name">VIP Vinyl Transfer</div>
-      <div class="feat-desc">Move VIP car vinyls</div>
-    </div>
-    <div class="feat-card" data-cat="transfer" style="--card-accent:#8e44ad" onclick="openPanel('kingrank')">
-      <span class="feat-icon">👑</span>
-      <div class="feat-name">King Rank</div>
-      <div class="feat-desc">Set max game rank</div>
-    </div>
-
-    <!-- Other features -->
-    <div class="feat-card" data-cat="other" style="--card-accent:#1abc9c" onclick="openPanel('decrypt')">
-      <span class="feat-icon">🔓</span>
-      <div class="feat-name">Decrypt ES3</div>
-      <div class="feat-desc">Decrypt save file</div>
-    </div>
-    <div class="feat-card" data-cat="other" style="--card-accent:#1abc9c" onclick="openPanel('showpassword')">
-      <span class="feat-icon">🔑</span>
-      <div class="feat-name">Show Password</div>
-      <div class="feat-desc">Recover ES3 password</div>
-    </div>
-    <div class="feat-card" data-cat="other" style="--card-accent:#16a085" onclick="openPanel('localmods')">
-      <span class="feat-icon">✨</span>
-      <div class="feat-name">Air / Police / Bodykits</div>
-      <div class="feat-desc">Unlock local mods</div>
-    </div>
-    <div class="feat-card" data-cat="other" style="--card-accent:#e74c3c" onclick="openPanel('mileage')">
-      <span class="feat-icon">🛞</span>
-      <div class="feat-name">Mileage Reset</div>
-      <div class="feat-desc">Reset mileage counter</div>
-    </div>
-
-  </div>
-</div>
-
-<!-- ── STORE PAGE ── -->
-<div class="page" id="page-store">
-  <div class="section-label">Available Packages</div>
-  <div class="notice">
-    <strong>🛒 Store</strong><br>
-    Purchase accounts and packages. Pay with Telegram Stars or USDT via Binance Pay.
-  </div>
-
-  <div class="store-card" onclick="openPanel('store-basic')">
-    <div class="store-icon">🥉</div>
-    <div class="store-info">
-      <div class="store-name">Basic Package</div>
-      <div class="store-price">Starter accounts • Stars or USDT</div>
-    </div>
-    <div class="store-arrow">›</div>
-  </div>
-  <div class="store-card" onclick="openPanel('store-pro')">
-    <div class="store-icon">🥈</div>
-    <div class="store-info">
-      <div class="store-name">Pro Package</div>
-      <div class="store-price">Premium accounts • Stars or USDT</div>
-    </div>
-    <div class="store-arrow">›</div>
-  </div>
-  <div class="store-card" onclick="openPanel('store-vip')">
-    <div class="store-icon">🥇</div>
-    <div class="store-info">
-      <div class="store-name">VIP Package</div>
-      <div class="store-price">Max-loaded accounts • Stars or USDT</div>
-    </div>
-    <div class="store-arrow">›</div>
-  </div>
-
-  <div class="section-label">Payment Methods</div>
-  <div class="info-card">
-    <div class="info-row">
-      <span class="info-key">⭐ Telegram Stars</span>
-      <span class="badge badge-green">Active</span>
-    </div>
-    <div class="info-row">
-      <span class="info-key">💳 USDT Binance</span>
-      <span class="badge badge-green">Active</span>
-    </div>
-  </div>
-</div>
-
-<!-- ── HELP PAGE ── -->
-<div class="page" id="page-help">
-  <div class="section-label">Frequently Asked</div>
-
-  <div class="help-item" onclick="toggleHelp(this)">
-    <div class="help-q">What is CPM1 / CPM2? <span class="help-chevron">▾</span></div>
-    <div class="help-a">CPM1 = Car Parking Multiplayer 1 (older version). CPM2 = Car Parking Multiplayer 2 (new version). Different features apply to each game.</div>
-  </div>
-  <div class="help-item" onclick="toggleHelp(this)">
-    <div class="help-q">What is an ES3 file? <span class="help-chevron">▾</span></div>
-    <div class="help-a">ES3 is the save file format used by Car Parking Multiplayer. You can export it from the game's settings and upload it here for decryption or modification.</div>
-  </div>
-  <div class="help-item" onclick="toggleHelp(this)">
-    <div class="help-q">How do I farm coins? <span class="help-chevron">▾</span></div>
-    <div class="help-a">Go to Features → Coins Farming. Enter your CPM2 email and password, choose farming mode (MAX / DRAG / COMBO / BOTH), and the bot will farm automatically. Results are sent to your Telegram chat.</div>
-  </div>
-  <div class="help-item" onclick="toggleHelp(this)">
-    <div class="help-q">What does VIP Vinyl Transfer do? <span class="help-chevron">▾</span></div>
-    <div class="help-a">It moves a VIP car's vinyl (custom paint/design) from one account to another. Useful for keeping a design on a new account.</div>
-  </div>
-  <div class="help-item" onclick="toggleHelp(this)">
-    <div class="help-q">How do I buy from the Store? <span class="help-chevron">▾</span></div>
-    <div class="help-a">Tap the Store tab, choose a package, and follow the steps. You'll pay with Telegram Stars or USDT (Binance Pay) and get your account credentials sent to your chat.</div>
-  </div>
-  <div class="help-item" onclick="toggleHelp(this)">
-    <div class="help-q">My run limit says 0 / 0 — what to do? <span class="help-chevron">▾</span></div>
-    <div class="help-a">Contact @imal4n on Telegram to top up your lifetime run quota. Your access may have expired or never been granted.</div>
-  </div>
-  <div class="help-item" onclick="toggleHelp(this)">
-    <div class="help-q">I got an error — who do I contact? <span class="help-chevron">▾</span></div>
-    <div class="help-a">Message @imal4n directly on Telegram with a screenshot of the error message. Include your Telegram ID if possible.</div>
-  </div>
-
-  <div class="section-label">Bot Info</div>
-  <div class="info-card">
-    <div class="info-row"><span class="info-key">Support</span><span class="info-val">@imal4n</span></div>
-    <div class="info-row"><span class="info-key">Game</span><span class="info-val">Car Parking Multiplayer</span></div>
-    <div class="info-row"><span class="info-key">Version</span><span class="badge badge-purple">v5</span></div>
-  </div>
-</div>
-
-<!-- ── PANEL OVERLAY ── -->
-<div class="panel-overlay" id="overlay" onclick="closePanel()"></div>
-
-<!-- ── INPUT PANEL ── -->
-<div class="panel" id="panel">
-  <div class="panel-drag"></div>
-  <div id="panelContent"></div>
-</div>
-
-<!-- ── TOAST ── -->
 <div class="toast" id="toast"></div>
 
-<!-- ── BOTTOM NAV ── -->
-<div class="bottom-nav">
-  <div class="nav-item active" onclick="navTo('home', this)">
-    <span class="nav-icon">🏠</span>Home
-  </div>
-  <div class="nav-item" onclick="navTo('features', this)">
-    <span class="nav-icon">⚙️</span>Features
-  </div>
-  <div class="nav-item" onclick="navTo('store', this)">
-    <span class="nav-icon">🛒</span>Store
-  </div>
-  <div class="nav-item" onclick="navTo('help', this)">
-    <span class="nav-icon">❓</span>Help
-  </div>
-</div>
-
 <script>
-/* ── Telegram WebApp init ── */
+const API = "";
 const tg = window.Telegram?.WebApp;
-if (tg) {
-  tg.ready();
-  tg.expand();
-  tg.setHeaderColor('#0d0d0f');
-  tg.setBackgroundColor('#0d0d0f');
+if (tg) { tg.ready(); tg.expand(); try { tg.setHeaderColor('#0e0f12'); tg.setBackgroundColor('#0e0f12'); } catch (e) {} }
+const store = { get(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+const q = new URLSearchParams(location.search).get('api');
+if (q) store.set('api', q);
+const BASE = (API || q || store.get('api') || '').replace(/\/$/, '');
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clean = s => String(s ?? '').replace(/[*`]/g, '');
+
+const IC = {
+ money:'<circle class="f" cx="12" cy="12" r="9.5"/><path d="M14.8 9.2c-.5-.9-1.4-1.3-2.8-1.3-1.5 0-2.6.8-2.6 2s1.1 1.7 2.6 2.1 2.6.9 2.6 2.1-1.1 2-2.6 2c-1.4 0-2.3-.4-2.8-1.3M12 5.8v2m0 8.3v2.1"/>',
+ coins:'<ellipse class="f" cx="12" cy="6" rx="7.5" ry="3"/><path d="M4.5 6v6c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V6M4.5 12v6c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3v-6"/>',
+ gem:'<path class="f" d="M6.2 3h11.6L22 9.2 12 21.5 2 9.2z"/><path d="M2 9.2h20M9.2 3L7.4 9.2 12 21.5l4.6-12.3L14.8 3"/>',
+ swap:'<rect class="f" x="2.5" y="3.5" width="9" height="8" rx="2.2"/><rect class="f" x="12.5" y="12.5" width="9" height="8" rx="2.2"/><path d="M14 7.5h6.5l-2.3-2.3M10 16.5H3.5l2.3 2.3"/>',
+ car:'<path class="f" d="M4.5 15.5l1.7-5.6A2.2 2.2 0 0 1 8.3 8.3h7.4a2.2 2.2 0 0 1 2.1 1.6l1.7 5.6z"/><rect class="f" x="2.5" y="15.5" width="19" height="4.5" rx="1.8"/><path d="M6.5 17.8h.01M17.5 17.8h.01M9 12h6"/>',
+ crown:'<path class="f" d="M3 8.5l4.6 4.2L12 5l4.4 7.7L21 8.5 19 19.5H5z"/><path d="M6 22h12"/>',
+ gauge:'<circle class="f" cx="12" cy="12" r="9.5"/><path d="M12 12.5l3.8-4M12 4.5V6M5.5 8l1.1 1M18.5 8l-1.1 1M3.5 12H5m14 0h1.5"/><circle cx="12" cy="12.5" r="1.3"/>',
+ pencil:'<path class="f" d="M3.5 20.5l1-4.3L16.3 4.4a2.1 2.1 0 0 1 3 3L7.7 19.4z"/><path d="M13.8 7l3.2 3.2M3.5 20.5l4.2-1"/>',
+ refresh:'<circle class="f" cx="12" cy="12" r="3.2"/><path d="M20 11A8 8 0 0 0 6 6.8M4 4v4h4M4 13a8 8 0 0 0 14 4.2M20 20v-4h-4"/>',
+ key:'<circle class="f" cx="8" cy="15.5" r="4.5"/><path d="M11.4 12.2L20.5 3M16.5 7l3 3M14 9.5l2.2 2.2"/>',
+ unlock:'<rect class="f" x="4.5" y="11" width="15" height="10.5" rx="2.4"/><path d="M8 11V8a4 4 0 0 1 7.6-1.7M12 15.5v2.5"/>',
+ sparkles:'<path class="f" d="M10.5 3l2 5.8 5.8 2-5.8 2-2 5.8-2-5.8-5.8-2 5.8-2z"/><path d="M19 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/>',
+ userplus:'<circle class="f" cx="10" cy="8" r="4.2"/><path d="M2.8 21a7.2 7.2 0 0 1 14.4 0M19.5 7.5v6M16.5 10.5h6"/>',
+ plus:'<circle class="f" cx="12" cy="12" r="9.5"/><path d="M12 7.5v9M7.5 12h9"/>'
+};
+const I = k => `<svg viewBox="0 0 24 24">${IC[k]}</svg>`;
+
+/* ── field helpers ── */
+const EM = {k:'email', l:'Email', t:'email'}, PW = {k:'password', l:'Password', t:'password'};
+const SRC = [{k:'src_email',l:'Source email',t:'email'},{k:'src_password',l:'Source password',t:'password'},{k:'dst_email',l:'Destination email',t:'email'},{k:'dst_password',l:'Destination password',t:'password'}];
+const CH = [EM, PW, {k:'new_email',l:'New email',t:'email'}, {k:'new_password',l:'New password',t:'password'}];
+const TYPE = d => ({k:'type', l:'Game', t:'select', o:[['cpm1','CPM1'],['cpm2','CPM2']], v:d});
+const FILE = (k, l, a) => ({k, l, t:'file', a:a || ''});
+const CHK = (k, l) => ({k, l, t:'check', v:true});
+
+const FEATS = [
+ {id:'money50m', cat:'Money', ic:'money', n:'Add 50M Money', d:'Add 50M money to a CPM2 account.', ep:'money50m', f:[EM,PW], bulk:2},
+ {id:'coins', cat:'Money', ic:'coins', n:'Coins Farming', d:'Farm coins automatically.', ep:'coins', f:[EM,PW,{k:'rounds',l:'Rounds',t:'number',v:'5'}], note:'This can take a few minutes. Keep the app open until it finishes.'},
+ {id:'viptransfer', vip:1, cat:'Cars', ic:'gem', n:'VIP Vinyl Transfer', d:'Copy VIP vinyl from CPM1 cars to CPM2.', custom:'vip'},
+ {id:'cpm2tocpm2', cat:'Cars', ic:'swap', n:'CPM2 → CPM2', d:'Transfer all cars between CPM2 accounts.', ep:'cpm2', f:SRC, build:v => ({src:{email:v.src_email,password:v.src_password}, dst:{email:v.dst_email,password:v.dst_password}}), note:'Copies every car from the source account to the destination.'},
+ {id:'cpm1tocpm2', cat:'Cars', ic:'car', n:'CPM1 → CPM2', d:'Convert a CPM1 ES3 file for your CPM2 account.', ep:'cpm1', out:'converted.es3',
+  f:[{k:'c1e',l:'CPM1 email',t:'email'},{k:'c1p',l:'CPM1 password',t:'password'},{k:'c2e',l:'CPM2 email',t:'email'},{k:'c2p',l:'CPM2 password',t:'password'},FILE('src_file','CPM1 ES3 file (source)'),FILE('dst_file','CPM2 ES3 file (destination)')],
+  build:v => ({cpm1:{email:v.c1e,password:v.c1p}, cpm2:{email:v.c2e,password:v.c2p}})},
+ {id:'kingrank', cat:'Account', ic:'crown', n:'King Rank', d:'Set King Rank on a CPM2 account.', ep:'kingrank', f:[EM,PW], x:{type:'cpm2'}, bulk:2},
+ {id:'mileage', cat:'Account', ic:'gauge', n:'Reset Mileage', d:'Reset car mileage to zero.', ep:'mileage', f:[EM,PW,TYPE('cpm2'),FILE('file','ES3 car file')], out:'mileage_reset.zip'},
+ {id:'cpm2changer', cat:'Account', ic:'pencil', n:'Change CPM2 Login', d:'Change email and password of a CPM2 account.', ep:'cpm2changer', f:CH, bulk:4},
+ {id:'cpm1changer', cat:'Account', ic:'refresh', n:'Change CPM1 Login', d:'Change email and password of a CPM1 account.', ep:'cpm1changer', f:CH, bulk:4},
+ {id:'showpassword', cat:'Tools', ic:'key', n:'Reveal Password', d:'Get the ES3 password of your save.', ep:'showpass', f:[EM,PW,TYPE('cpm1'),FILE('file','Any ES3 file from your save')]},
+ {id:'decrypt', cat:'Tools', ic:'unlock', n:'Decrypt File', d:'Decrypt a CPM save file.', ep:'decrypt', f:[EM,PW,TYPE('cpm1'),FILE('file','ES3 file')], out:'decrypted.es3'},
+ {id:'localmods', cat:'Tools', ic:'sparkles', n:'Local Mods', d:'Unlock air suspension, police lights and bodykits.', ep:'localmods', f:[EM,PW,CHK('air','Air suspension'),CHK('police','Police lights & sirens'),CHK('bodykits','Bodykits / wheels')]},
+ {id:'createcpm2', cat:'Create', ic:'userplus', n:'Create CPM2 Account', d:'Create new CPM2 accounts.', ep:'createcpm2', f:[{k:'count',l:'How many (max 50)',t:'number',v:'1'}]},
+ {id:'createcpm1', cat:'Create', ic:'plus', n:'Create CPM1 Account', d:'Create new CPM1 accounts.', ep:'createcpm1', f:[{k:'count',l:'How many (max 50)',t:'number',v:'1'}]}
+];
+const CATS = ['All','Money','Cars','Account','Tools','Create'];
+let cat = 'All', cur = null, bulkOn = false;
+
+/* ── UI basics ── */
+function toast(m, bad) { const t = $('toast'); t.textContent = m; t.className = 'toast on' + (bad ? ' bad' : ''); clearTimeout(toast.t); toast.t = setTimeout(() => t.className = 'toast', 2600); }
+function haptic(ok) { try { tg?.HapticFeedback?.notificationOccurred(ok ? 'success' : 'error'); } catch (e) {} }
+function banner(t) { const b = $('banner'); b.textContent = t; b.hidden = false; }
+
+const THEMES = [['gold','#ff9a3d,#ffe28a'],['blue','#5b8cff,#b25cff'],['green','#2fe0a8,#35d6ff'],['red','#ff4d6d,#ff8a3d'],['silver','#c4cad8,#ffffff']];
+function setTheme(n, save) {
+  document.documentElement.dataset.th = n;
+  document.querySelectorAll('#th button[data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === n));
+  if (save) {
+    const bt = document.querySelector('#th button[data-t="' + n + '"]').getBoundingClientRect(), w = document.createElement('div');
+    w.className = 'wave'; w.style.left = (bt.left + bt.width / 2) + 'px'; w.style.top = (bt.top + bt.height / 2) + 'px';
+    document.body.appendChild(w); setTimeout(() => w.remove(), 900);
+    store.set('th', n); try { tg?.HapticFeedback?.selectionChanged?.(); } catch (e) {}
+  }
 }
+$('th').innerHTML = THEMES.map(([n, g]) => `<button data-t="${n}" aria-label="${n}" style="background:linear-gradient(135deg,${g})"></button>`).join('') + '<button class="fxb" id="fxb" aria-label="Effects">✨ FX</button>';
+$('th').onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.id === 'fxb') return toggleFx(); setTheme(b.dataset.t, 1); };
+setTheme(THEMES.some(t => t[0] === store.get('th')) ? store.get('th') : 'gold');
 
 const user = tg?.initDataUnsafe?.user;
-if (user) {
-  const name = user.username ? '@' + user.username : (user.first_name || 'User');
-  document.getElementById('userLabel').textContent = name;
+if (user) $('name').textContent = 'Hi, ' + (user.first_name || 'there');
+
+function renderTabs() {
+  $('tabs').innerHTML = CATS.map(c => `<button class="tab${c === cat ? ' on' : ''}" data-c="${c}">${c}</button>`).join('');
+}
+$('tabs').onclick = e => { const b = e.target.closest('.tab'); if (b) { cat = b.dataset.c; renderTabs(); render(); } };
+function render() {
+  const list = FEATS.filter(t => cat === 'All' || t.cat === cat);
+  const spk = t => t.vip ? '<span class="spk" style="top:50px;right:22px">✦</span><span class="spk" style="bottom:16px;right:16px;animation-delay:.8s">✦</span><span class="spk" style="top:62px;left:70px;animation-delay:1.5s">✦</span>' : '<span class="spk" style="top:52px;right:16px">✦</span><span class="spk" style="bottom:14px;right:22px;animation-delay:1.1s">✦</span>';
+  $('grid').innerHTML = list.map((t, i) => `<button class="item${t.vip ? ' vip' : ''}" data-id="${t.id}" style="--i:${i}">${t.vip ? '<span class="badge">VIP</span>' : ''}${spk(t)}<span class="ic">${I(t.ic)}</span><b>${t.n}</b><span>${t.d}</span></button>`).join('');
+}
+$('grid').onclick = e => { const b = e.target.closest('.item'); if (b) openSheet(b.dataset.id); };
+renderTabs(); render();
+
+/* ── form building ── */
+const EYE = '<svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+function fieldHTML(f) {
+  const k = `data-k="${f.k}"`;
+  if (f.t === 'check') return `<div class="chk"><input type="checkbox" ${k}${f.v ? ' checked' : ''}><span>${f.l}</span></div>`;
+  let inner;
+  if (f.t === 'password') inner = `<div class="pw"><input ${k} type="password" autocomplete="off" autocapitalize="off"><button type="button" class="eye" aria-label="Show">${EYE}</button></div>`;
+  else if (f.t === 'select') inner = `<select ${k}>${f.o.map(([v, l]) => `<option value="${v}"${v === f.v ? ' selected' : ''}>${l}</option>`).join('')}</select>`;
+  else if (f.t === 'file') inner = `<input ${k} type="file" accept="${f.a || ''}">`;
+  else if (f.t === 'number') inner = `<input ${k} type="number" inputmode="numeric" min="1" value="${f.v || ''}">`;
+  else inner = `<input ${k} type="${f.t}" value="${f.v || ''}" autocomplete="off" autocapitalize="off" spellcheck="false">`;
+  return `<label class="l">${f.l}</label>${inner}`;
+}
+$('sForm').addEventListener('click', e => {
+  const eye = e.target.closest('.eye');
+  if (eye) { const i = eye.parentElement.querySelector('input'); i.type = i.type === 'password' ? 'text' : 'password'; }
+});
+
+function openSheet(id) {
+  cur = FEATS.find(t => t.id === id);
+  bulkOn = false;
+  $('sheet').classList.toggle('vipS', !!cur.vip);
+  $('sIc').innerHTML = I(cur.ic); $('sTitle').textContent = cur.n; $('sDesc').textContent = cur.d;
+  $('sRes').innerHTML = ''; $('sNote').textContent = cur.note || '';
+  if (cur.custom === 'vip') { vipOpen(); }
+  else {
+    let h = '';
+    if (cur.bulk) h += '<div class="seg" id="bsw"><button type="button" data-m="0" class="on">Single</button><button type="button" data-m="1">Bulk</button></div>';
+    h += `<div id="single">${cur.f.map(fieldHTML).join('')}</div>`;
+    if (cur.bulk) {
+      const hint = cur.bulk === 2 ? 'email:password' : 'email:password:new_email:new_password';
+      h += `<div id="bwrap" hidden><label class="l">Accounts, one per line</label><div class="row"><label for="bfile" class="pick">📄 Upload .txt file</label><input id="bfile" type="file" accept=".txt,text/plain" hidden><span class="cnt" id="bcnt">0 lines</span></div><textarea id="bulk" placeholder="${hint}" autocapitalize="off" autocomplete="off" spellcheck="false"></textarea></div>`;
+    }
+    $('sForm').innerHTML = h;
+    $('go').textContent = 'Run';
+    if (cur.bulk) wireBulk();
+  }
+  document.body.style.overflow = 'hidden'; document.body.classList.add('so');
+  requestAnimationFrame(() => { $('ov').classList.add('on'); $('sheet').classList.add('on'); });
+}
+function closeSheet() { $('ov').classList.remove('on'); $('sheet').classList.remove('on'); document.body.style.overflow = ''; document.body.classList.remove('so'); }
+$('ov').onclick = closeSheet; $('cl').onclick = closeSheet;
+
+function wireBulk() {
+  const upd = () => { const n = parseBulk($('bulk').value, cur.bulk).length; $('bcnt').textContent = n + ' valid'; };
+  $('bulk').oninput = upd;
+  $('bfile').onchange = e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { $('bulk').value = String(r.result).replace(/\r/g, '').trim(); upd(); }; r.readAsText(f); e.target.value = ''; };
+  $('bsw').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    bulkOn = b.dataset.m === '1';
+    document.querySelectorAll('#bsw button').forEach(x => x.classList.toggle('on', x === b));
+    $('single').hidden = bulkOn; $('bwrap').hidden = !bulkOn;
+    $('go').textContent = bulkOn ? 'Run all' : 'Run';
+  };
+}
+function parseBulk(text, parts) {
+  const rows = [];
+  for (const raw of String(text).split(/\r?\n/)) {
+    const line = raw.trim(); if (!line) continue;
+    const t = line.split(':');
+    if (parts === 2) { if (t.length >= 2 && t[0].trim()) rows.push({email: t[0].trim(), password: t.slice(1).join(':')}); }
+    else {
+      let i = -1; for (let j = 2; j < t.length; j++) if (t[j].includes('@')) { i = j; break; }
+      if (t.length >= 4 && i > 0 && i < t.length - 1) rows.push({email: t[0].trim(), password: t.slice(1, i).join(':'), new_email: t[i].trim(), new_password: t.slice(i + 1).join(':')});
+    }
+  }
+  return rows;
 }
 
-/* ── NAV ── */
-function navTo(id, el) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-' + id).classList.add('active');
-  el.classList.add('active');
-  const ft = document.getElementById('featureTabs');
-  ft.style.display = id === 'features' ? 'flex' : 'none';
+/* ── network ── */
+async function call(ep, body, files) {
+  body = {...body, initData: tg?.initData || ''};
+  let opt;
+  if (files && Object.keys(files).length) {
+    const fd = new FormData();
+    for (const [k, v] of Object.entries(body)) fd.append(k, typeof v === 'object' ? JSON.stringify(v) : String(v));
+    for (const [k, f] of Object.entries(files)) fd.append(k, f, f.name);
+    opt = {method: 'POST', body: fd};
+  } else opt = {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)};
+  let r;
+  try { r = await fetch(BASE + '/api/' + ep, opt); }
+  catch (e) { return {ok: false, error: 'Could not reach the bot server. Make sure it is online.'}; }
+  const ct = r.headers.get('Content-Type') || '';
+  if (ct.includes('application/json')) {
+    let d = {}; try { d = await r.json(); } catch (e) {}
+    if (!r.ok || d.error) return {ok: false, error: d.error || ('Server error ' + r.status)};
+    return {ok: true, data: d};
+  }
+  if (!r.ok) return {ok: false, error: r.status === 413 ? 'File too large (max 8 MB).' : 'Server error ' + r.status};
+  const blob = await r.blob();
+  const m = /filename="?([^";]+)"?/.exec(r.headers.get('Content-Disposition') || '');
+  return {ok: true, blob, name: m ? m[1] : ''};
+}
+async function pool(items, n, fn) {
+  let i = 0; const out = new Array(items.length);
+  await Promise.all(Array.from({length: Math.min(n, items.length)}, async () => { while (i < items.length) { const k = i++; out[k] = await fn(items[k], k); } }));
+  return out;
 }
 
-/* ── FEATURE FILTER ── */
-function filterFeats(cat) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  event.target.classList.add('active');
-  document.querySelectorAll('#featGrid .feat-card').forEach(c => {
-    c.style.display = (cat === 'all' || c.dataset.cat === cat) ? '' : 'none';
+/* ── results ── */
+function saveBlob(name, blob) {
+  const url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+async function shareBlob(name, blob) {
+  const file = new File([blob], name, {type: blob.type || 'application/octet-stream'});
+  try { await navigator.share({files: [file], title: name}); } catch (e) {}
+}
+function showResult({ok, text, files = [], copy}) {
+  const box = document.createElement('div');
+  box.className = 'res' + (ok ? ' ok' : '');
+  const pre = document.createElement('pre'); pre.textContent = text || ''; box.appendChild(pre);
+  const acts = document.createElement('div'); acts.className = 'acts';
+  const mk = (label, fn) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.onclick = fn; acts.appendChild(b); };
+  if (text) mk('Copy', () => navigator.clipboard?.writeText(copy || text).then(() => toast('Copied')).catch(() => toast('Copy failed', true)));
+  files.forEach(f => {
+    mk('⬇ Save ' + f.name, () => saveBlob(f.name, f.blob));
+    const probe = new File([f.blob], f.name);
+    if (navigator.canShare?.({files: [probe]})) mk('Share', () => shareBlob(f.name, f.blob));
   });
+  if (acts.children.length) box.appendChild(acts);
+  $('sRes').innerHTML = ''; $('sRes').appendChild(box);
+  box.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+  haptic(ok);
+}
+function dataText(d) {
+  let t = clean(d.message || 'Done.');
+  if (Array.isArray(d.accounts) && d.accounts.length) t += '\n\n' + d.accounts.map(a => `${a.email}:${a.password}`).join('\n');
+  return t;
 }
 
-/* ── PANEL DEFINITIONS ── */
-const panels = {
+/* ── run ── */
+let timer = null;
+function busy(on, label) {
+  const b = $('go'); clearInterval(timer);
+  if (on) { const s = Date.now(); b.disabled = true; const tick = () => b.textContent = (label || 'Working…') + ' ' + Math.floor((Date.now() - s) / 1000) + 's'; tick(); timer = setInterval(tick, 1000); }
+  else b.disabled = false;
+}
+function restoreLabel() { $('go').textContent = cur.custom ? $('go').textContent : (bulkOn ? 'Run all' : 'Run'); }
 
-  coins: {
-    title: '🪙 Coins Farming',
-    desc: 'Auto-farm coins on your CPM2 account. Results sent to your chat.',
-    html: `
-      <label>Email</label>
-      <input type="email" id="f_email" placeholder="your@email.com" autocomplete="off"/>
-      <label>Password</label>
-      <input type="password" id="f_pass" placeholder="••••••••"/>
-      <label>Farming Mode</label>
-      <div class="radio-group">
-        <button class="radio-btn selected" onclick="selMode(this,'MAX')">MAX</button>
-        <button class="radio-btn" onclick="selMode(this,'DRAG')">DRAG</button>
-        <button class="radio-btn" onclick="selMode(this,'COMBO')">COMBO</button>
-        <button class="radio-btn" onclick="selMode(this,'BOTH')">BOTH</button>
-      </div>
-      <label>Rounds (1–50)</label>
-      <input type="text" id="f_rounds" placeholder="5" value="5"/>
-      <button class="btn" onclick="sendAction('coins')">▶ Start Farming</button>
-    `,
-  },
-
-  money50m: {
-    title: '💰 Add 50M Money',
-    desc: 'Inject 50,000,000 money into your CPM2 account.',
-    html: `
-      <label>CPM2 Email</label>
-      <input type="email" id="f_email" placeholder="your@email.com"/>
-      <label>CPM2 Password</label>
-      <input type="password" id="f_pass" placeholder="••••••••"/>
-      <button class="btn" onclick="sendAction('money50m')">💰 Inject 50M Money</button>
-    `,
-  },
-
-  createcpm2: {
-    title: '👤 Create CPM2 Account',
-    desc: 'Generate a new Car Parking Multiplayer 2 account with max money and coins.',
-    html: `
-      <div class="notice" style="margin-bottom:16px">Account will be created automatically with <strong>50M money</strong> and <strong>30K coins</strong>.</div>
-      <label>Count (1–10)</label>
-      <input type="text" id="f_count" placeholder="1" value="1"/>
-      <button class="btn" onclick="sendAction('createcpm2')">✨ Create Account</button>
-    `,
-  },
-
-  createcpm1: {
-    title: '🆕 Create CPM1 Account',
-    desc: 'Generate a new CPM1 account with max items and king rank.',
-    html: `
-      <div class="notice" style="margin-bottom:16px">Account will be created with max rank, all cars, and 50M money.</div>
-      <label>Count (1–5)</label>
-      <input type="text" id="f_count" placeholder="1" value="1"/>
-      <button class="btn" onclick="sendAction('createcpm1')">🆕 Create CPM1 Account</button>
-    `,
-  },
-
-  cpm1tocpm2: {
-    title: '🔀 CPM1 → CPM2 Transfer',
-    desc: 'Transfer car data from CPM1 save file to a CPM2 account.',
-    html: `
-      <label>CPM1 Save File (ES3)</label>
-      <div class="file-drop" id="fileDropA">
-        <input type="file" accept=".es3,.json" onchange="setFile(this,'fileDropA','f_file_a')"/>
-        <span class="file-drop-icon">📁</span>
-        <span>Tap to upload ES3 file</span>
-        <div class="file-name" id="f_file_a_name"></div>
-      </div>
-      <label>CPM2 Email</label>
-      <input type="email" id="f_email" placeholder="your@email.com"/>
-      <label>CPM2 Password</label>
-      <input type="password" id="f_pass" placeholder="••••••••"/>
-      <button class="btn" onclick="sendAction('cpm1tocpm2')">🔀 Start Transfer</button>
-    `,
-  },
-
-  cpm2tocpm2: {
-    title: '↔️ CPM2 → CPM2 Transfer',
-    desc: 'Transfer cars between two CPM2 accounts.',
-    html: `
-      <label>Source Email</label>
-      <input type="email" id="f_src_email" placeholder="source@email.com"/>
-      <label>Source Password</label>
-      <input type="password" id="f_src_pass" placeholder="••••••••"/>
-      <label>Destination Email</label>
-      <input type="email" id="f_dst_email" placeholder="dest@email.com"/>
-      <label>Destination Password</label>
-      <input type="password" id="f_dst_pass" placeholder="••••••••"/>
-      <button class="btn" onclick="sendAction('cpm2tocpm2')">↔️ Transfer Cars</button>
-    `,
-  },
-
-  viptransfer: {
-    title: '🏆 VIP Vinyl Transfer',
-    desc: 'Move VIP car vinyl design from one account to another.',
-    html: `
-      <label>Source CPM2 Email</label>
-      <input type="email" id="f_src_email" placeholder="source@email.com"/>
-      <label>Source Password</label>
-      <input type="password" id="f_src_pass" placeholder="••••••••"/>
-      <label>Destination CPM2 Email</label>
-      <input type="email" id="f_dst_email" placeholder="dest@email.com"/>
-      <label>Destination Password</label>
-      <input type="password" id="f_dst_pass" placeholder="••••••••"/>
-      <button class="btn" onclick="sendAction('viptransfer')">🏆 Transfer VIP Vinyl</button>
-    `,
-  },
-
-  kingrank: {
-    title: '👑 King Rank',
-    desc: 'Set maximum king rank on your CPM2 account.',
-    html: `
-      <label>CPM2 Email</label>
-      <input type="email" id="f_email" placeholder="your@email.com"/>
-      <label>Password</label>
-      <input type="password" id="f_pass" placeholder="••••••••"/>
-      <button class="btn" onclick="sendAction('kingrank')">👑 Set King Rank</button>
-    `,
-  },
-
-  decrypt: {
-    title: '🔓 Decrypt ES3',
-    desc: 'Decrypt your game save file and get the raw JSON data.',
-    html: `
-      <label>Game Type</label>
-      <div class="radio-group">
-        <button class="radio-btn selected" onclick="selMode(this,'CPM1')">CPM1</button>
-        <button class="radio-btn" onclick="selMode(this,'CPM2')">CPM2</button>
-      </div>
-      <label>ES3 Save File</label>
-      <div class="file-drop" id="fileDropD">
-        <input type="file" accept=".es3" onchange="setFile(this,'fileDropD','f_file_d')"/>
-        <span class="file-drop-icon">📁</span>
-        <span>Tap to upload ES3 file</span>
-        <div class="file-name" id="f_file_d_name"></div>
-      </div>
-      <label>Email</label>
-      <input type="email" id="f_email" placeholder="your@email.com"/>
-      <label>Password</label>
-      <input type="password" id="f_pass" placeholder="••••••••"/>
-      <button class="btn" onclick="sendAction('decrypt')">🔓 Decrypt File</button>
-    `,
-  },
-
-  showpassword: {
-    title: '🔑 Show ES3 Password',
-    desc: 'Recover the encryption password from your ES3 save file.',
-    html: `
-      <label>Game Type</label>
-      <div class="radio-group">
-        <button class="radio-btn selected" onclick="selMode(this,'CPM1')">CPM1</button>
-        <button class="radio-btn" onclick="selMode(this,'CPM2')">CPM2</button>
-      </div>
-      <label>ES3 Save File</label>
-      <div class="file-drop" id="fileDropS">
-        <input type="file" accept=".es3" onchange="setFile(this,'fileDropS','f_file_s')"/>
-        <span class="file-drop-icon">📁</span>
-        <span>Tap to upload ES3 file</span>
-        <div class="file-name" id="f_file_s_name"></div>
-      </div>
-      <label>Email</label>
-      <input type="email" id="f_email" placeholder="your@email.com"/>
-      <button class="btn" onclick="sendAction('showpassword')">🔑 Reveal Password</button>
-    `,
-  },
-
-  localmods: {
-    title: '✨ Air / Police / Bodykits',
-    desc: 'Unlock local mods like air suspension, police lights, and bodykits.',
-    html: `
-      <label>Mod Type</label>
-      <div class="radio-group">
-        <button class="radio-btn selected" onclick="selMode(this,'air')">Air</button>
-        <button class="radio-btn" onclick="selMode(this,'police')">Police</button>
-        <button class="radio-btn" onclick="selMode(this,'bodykits')">Bodykits</button>
-        <button class="radio-btn" onclick="selMode(this,'all')">All</button>
-      </div>
-      <label>ES3 Save File</label>
-      <div class="file-drop" id="fileDropM">
-        <input type="file" accept=".es3" onchange="setFile(this,'fileDropM','f_file_m')"/>
-        <span class="file-drop-icon">📁</span>
-        <span>Tap to upload ES3 file</span>
-        <div class="file-name" id="f_file_m_name"></div>
-      </div>
-      <button class="btn" onclick="sendAction('localmods')">✨ Apply Mods</button>
-    `,
-  },
-
-  mileage: {
-    title: '🛞 Mileage Reset',
-    desc: 'Reset the mileage counter on your game account.',
-    html: `
-      <label>Game Type</label>
-      <div class="radio-group">
-        <button class="radio-btn selected" onclick="selMode(this,'CPM1')">CPM1</button>
-        <button class="radio-btn" onclick="selMode(this,'CPM2')">CPM2</button>
-      </div>
-      <label>Email</label>
-      <input type="email" id="f_email" placeholder="your@email.com"/>
-      <label>Password</label>
-      <input type="password" id="f_pass" placeholder="••••••••"/>
-      <button class="btn" onclick="sendAction('mileage')">🛞 Reset Mileage</button>
-    `,
-  },
-
-  cpm2changer: {
-    title: '✏️ CPM2 Email/Password Changer',
-    desc: 'Change email or password on a CPM2 account.',
-    html: `
-      <label>Current Email</label>
-      <input type="email" id="f_email" placeholder="current@email.com"/>
-      <label>Current Password</label>
-      <input type="password" id="f_pass" placeholder="Current password"/>
-      <label>New Email</label>
-      <input type="email" id="f_new_email" placeholder="new@email.com"/>
-      <label>New Password</label>
-      <input type="password" id="f_new_pass" placeholder="New password"/>
-      <button class="btn" onclick="sendAction('cpm2changer')">✏️ Change Credentials</button>
-    `,
-  },
-
-  cpm1changer: {
-    title: '🔄 CPM1 Changer',
-    desc: 'Change email or password on a CPM1 account.',
-    html: `
-      <label>Current Email</label>
-      <input type="email" id="f_email" placeholder="current@email.com"/>
-      <label>Current Password</label>
-      <input type="password" id="f_pass" placeholder="Current password"/>
-      <label>New Email</label>
-      <input type="email" id="f_new_email" placeholder="new@email.com"/>
-      <label>New Password</label>
-      <input type="password" id="f_new_pass" placeholder="New password"/>
-      <button class="btn" onclick="sendAction('cpm1changer')">🔄 Change Credentials</button>
-    `,
-  },
-
-  'store-basic': {
-    title: '🥉 Basic Package',
-    desc: 'Starter CPM2 account. Contact @imal4n after purchase to confirm.',
-    html: `
-      <div class="info-card" style="margin-bottom:16px">
-        <div class="info-row"><span class="info-key">Includes</span><span class="info-val">CPM2 Account</span></div>
-        <div class="info-row"><span class="info-key">Money</span><span class="info-val">50M</span></div>
-        <div class="info-row"><span class="info-key">Coins</span><span class="info-val">30,000</span></div>
-        <div class="info-row"><span class="info-key">Payment</span><span class="badge badge-green">Stars / USDT</span></div>
-      </div>
-      <label>Payment Method</label>
-      <div class="radio-group">
-        <button class="radio-btn selected" onclick="selMode(this,'stars')">⭐ Stars</button>
-        <button class="radio-btn" onclick="selMode(this,'usdt')">💳 USDT</button>
-      </div>
-      <button class="btn" onclick="sendAction('store-buy','basic')">🛒 Buy Basic Package</button>
-    `,
-  },
-
-  'store-pro': {
-    title: '🥈 Pro Package',
-    desc: 'Premium CPM2 account with extra features. Contact @imal4n after purchase.',
-    html: `
-      <div class="info-card" style="margin-bottom:16px">
-        <div class="info-row"><span class="info-key">Includes</span><span class="info-val">CPM2 + VIP Cars</span></div>
-        <div class="info-row"><span class="info-key">Money</span><span class="info-val">50M</span></div>
-        <div class="info-row"><span class="info-key">Coins</span><span class="info-val">30,000</span></div>
-        <div class="info-row"><span class="info-key">Payment</span><span class="badge badge-green">Stars / USDT</span></div>
-      </div>
-      <label>Payment Method</label>
-      <div class="radio-group">
-        <button class="radio-btn selected" onclick="selMode(this,'stars')">⭐ Stars</button>
-        <button class="radio-btn" onclick="selMode(this,'usdt')">💳 USDT</button>
-      </div>
-      <button class="btn" onclick="sendAction('store-buy','pro')">🛒 Buy Pro Package</button>
-    `,
-  },
-
-  'store-vip': {
-    title: '🥇 VIP Package',
-    desc: 'Max-loaded CPM2 account with king rank and VIP vinyls.',
-    html: `
-      <div class="info-card" style="margin-bottom:16px">
-        <div class="info-row"><span class="info-key">Includes</span><span class="info-val">VIP Full Account</span></div>
-        <div class="info-row"><span class="info-key">Rank</span><span class="badge badge-yellow">King Rank</span></div>
-        <div class="info-row"><span class="info-key">Money</span><span class="info-val">50M</span></div>
-        <div class="info-row"><span class="info-key">Payment</span><span class="badge badge-green">Stars / USDT</span></div>
-      </div>
-      <label>Payment Method</label>
-      <div class="radio-group">
-        <button class="radio-btn selected" onclick="selMode(this,'stars')">⭐ Stars</button>
-        <button class="radio-btn" onclick="selMode(this,'usdt')">💳 USDT</button>
-      </div>
-      <label>Transaction ID (after payment)</label>
-      <input type="text" id="f_txid" placeholder="Paste your TXID here (USDT only)"/>
-      <button class="btn" onclick="sendAction('store-buy','vip')">🛒 Buy VIP Package</button>
-    `,
-  },
+$('go').onclick = async () => {
+  if (cur.custom === 'vip') return vipGo();
+  const label = $('go').textContent;
+  if (cur.bulk && bulkOn) return runBulk(label);
+  const v = {}, files = {}; let bad = false;
+  for (const f of cur.f) {
+    const el = $('sForm').querySelector(`[data-k="${f.k}"]`); if (!el) continue;
+    el.classList.remove('err');
+    if (f.t === 'file') { const fl = el.files[0]; if (!fl) { el.classList.add('err'); bad = true; } else if (fl.size > 7.5 * 1048576) { toast('File too large (max 8 MB)', true); return; } else files[f.k] = fl; }
+    else if (f.t === 'check') v[f.k] = el.checked;
+    else { const val = f.t === 'password' ? el.value : el.value.trim(); if (!val) { el.classList.add('err'); bad = true; } v[f.k] = f.t === 'number' ? Number(val) : val; }
+  }
+  if (bad) { haptic(false); return toast('Fill all fields', true); }
+  let body;
+  if (cur.build) body = cur.build(v);
+  else { body = {}; for (const f of cur.f) if (f.t !== 'file') body[f.k] = v[f.k]; }
+  body = {...body, ...(cur.x || {})};
+  $('sRes').innerHTML = '';
+  busy(true);
+  const r = await call(cur.ep, body, files);
+  busy(false); $('go').textContent = label;
+  if (!r.ok) return showResult({ok: false, text: r.error});
+  if (r.blob) return showResult({ok: true, text: `Done. File ready (${Math.max(1, Math.round(r.blob.size / 1024))} KB).`, files: [{name: r.name || cur.out || 'result.bin', blob: r.blob}]});
+  showResult({ok: true, text: dataText(r.data), copy: r.data.password});
 };
 
-/* ── SELECTED MODE STATE ── */
-let selectedMode = '';
-
-function selMode(btn, val) {
-  btn.closest('.radio-group').querySelectorAll('.radio-btn').forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected');
-  selectedMode = val;
+async function runBulk(label) {
+  const rows = parseBulk($('bulk').value, cur.bulk);
+  if (!rows.length) { haptic(false); return toast('No valid lines found', true); }
+  if (rows.length > 200) return toast('Max 200 lines at a time', true);
+  $('sRes').innerHTML = '';
+  let done = 0; const b = $('go'); b.disabled = true; b.textContent = `Working… 0/${rows.length}`;
+  const res = await pool(rows, 3, async row => {
+    const r = await call(cur.ep, {...row, ...(cur.x || {})});
+    b.textContent = `Working… ${++done}/${rows.length}`;
+    if (!r.ok) return {ok: false, line: `❌ ${row.email} → ${r.error}`};
+    return {ok: true, line: `✅ ${row.email} → ${clean(r.data.message || 'Done').replace(/\s*\n\s*/g, ' | ')}`};
+  });
+  b.disabled = false; b.textContent = label;
+  const okc = res.filter(x => x.ok).length;
+  showResult({ok: okc > 0, text: `${okc}/${res.length} succeeded\n\n` + res.map(x => x.line).join('\n')});
 }
 
-/* ── FILE HANDLING ── */
-const fileStore = {};
-
-function setFile(input, dropId, key) {
-  const f = input.files[0];
-  if (!f) return;
-  fileStore[key] = f;
-  const nameEl = document.getElementById(key + '_name');
-  if (nameEl) nameEl.textContent = '📎 ' + f.name;
+/* ── VIP vinyl transfer (read cars → pick donor → pick targets → send) ── */
+let vip = null;
+const VF = [{k:'c1e',l:'CPM1 email',t:'email'},{k:'c1p',l:'CPM1 password',t:'password'},{k:'c2e',l:'CPM2 email',t:'email'},{k:'c2p',l:'CPM2 password',t:'password'},{k:'scope',l:'Cars to list',t:'select',o:[['same','Only cars owned in both games'],['all','All CPM1 cars']],v:'same'}];
+function vipOpen() {
+  vip = {step: 1, cars: [], cpm2: [], donor: null, targets: new Set()};
+  $('sForm').innerHTML = VF.map(fieldHTML).join('') + '<div id="vipList"></div>';
+  $('go').textContent = 'Read cars';
+  $('sNote').textContent = 'Reads your cars first, then you choose which ones to transfer.';
 }
-
-/* ── OPEN / CLOSE PANEL ── */
-function openPanel(id, extra) {
-  const cfg = panels[id];
-  if (!cfg) return;
-  selectedMode = '';
-  const pc = document.getElementById('panelContent');
-  pc.innerHTML = `
-    <div class="panel-title">${cfg.title}</div>
-    <div class="panel-desc">${cfg.desc}</div>
-    ${cfg.html}
-    <button class="btn secondary" onclick="closePanel()">✕ Cancel</button>
-  `;
-  // Set initial mode from first selected radio
-  const first = pc.querySelector('.radio-btn.selected');
-  if (first) selectedMode = first.textContent.trim();
-
-  document.getElementById('panel').classList.add('open');
-  document.getElementById('overlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-
-  // Store extra context
-  document.getElementById('panel').dataset.extra = extra || '';
-  document.getElementById('panel').dataset.action = id;
-}
-
-function closePanel() {
-  document.getElementById('panel').classList.remove('open');
-  document.getElementById('overlay').classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-/* ── SEND ACTION TO BOT ── */
-function sendAction(action, extra) {
-  const get = id => (document.getElementById(id)?.value || '').trim();
-
-  let payload = { action, mode: selectedMode };
-
-  if (action === 'coins') {
-    const email = get('f_email'), pass = get('f_pass'), rounds = get('f_rounds');
-    if (!email || !pass) { showToast('Enter email and password', 'error'); return; }
-    payload = { action, email, password: pass, mode: selectedMode || 'MAX', rounds: rounds || '5' };
-  } else if (action === 'money50m') {
-    const email = get('f_email'), pass = get('f_pass');
-    if (!email || !pass) { showToast('Enter email and password', 'error'); return; }
-    payload = { action, email, password: pass };
-  } else if (action === 'createcpm2') {
-    payload = { action, count: get('f_count') || '1' };
-  } else if (action === 'createcpm1') {
-    payload = { action, count: get('f_count') || '1' };
-  } else if (action === 'cpm1tocpm2') {
-    const email = get('f_email'), pass = get('f_pass');
-    if (!email || !pass) { showToast('Enter CPM2 credentials', 'error'); return; }
-    payload = { action, email, password: pass };
-  } else if (action === 'cpm2tocpm2' || action === 'viptransfer') {
-    const se = get('f_src_email'), sp = get('f_src_pass'), de = get('f_dst_email'), dp = get('f_dst_pass');
-    if (!se || !sp || !de || !dp) { showToast('Fill all 4 fields', 'error'); return; }
-    payload = { action, src_email: se, src_password: sp, dst_email: de, dst_password: dp };
-  } else if (action === 'kingrank' || action === 'mileage') {
-    const email = get('f_email'), pass = get('f_pass');
-    if (!email || !pass) { showToast('Enter email and password', 'error'); return; }
-    payload = { action, email, password: pass, game_type: selectedMode || 'CPM2' };
-  } else if (action === 'decrypt' || action === 'showpassword') {
-    const email = get('f_email'), pass = get('f_pass');
-    if (!email) { showToast('Enter email', 'error'); return; }
-    payload = { action, email, password: pass, game_type: selectedMode || 'CPM1' };
-  } else if (action === 'localmods') {
-    payload = { action, mod_type: selectedMode || 'all' };
-  } else if (action === 'cpm2changer' || action === 'cpm1changer') {
-    const email = get('f_email'), pass = get('f_pass'), ne = get('f_new_email'), np = get('f_new_pass');
-    if (!email || !pass || !ne || !np) { showToast('Fill all fields', 'error'); return; }
-    payload = { action, email, password: pass, new_email: ne, new_password: np };
-  } else if (action === 'store-buy') {
-    payload = { action, package: extra, payment_method: selectedMode || 'stars', txid: get('f_txid') || '' };
+const vcreds = () => { const g = k => $('sForm').querySelector(`[data-k="${k}"]`).value; return {cpm1: {email: g('c1e').trim(), password: g('c1p')}, cpm2: {email: g('c2e').trim(), password: g('c2p')}, scope: g('scope')}; };
+async function vipGo() {
+  const c = vcreds();
+  if (!c.cpm1.email || !c.cpm1.password || !c.cpm2.email || !c.cpm2.password) { haptic(false); return toast('Enter both accounts', true); }
+  $('sRes').innerHTML = '';
+  if (vip.step === 1) {
+    busy(true, 'Reading…');
+    const r = await call('vip/read', c);
+    busy(false);
+    if (!r.ok) { $('go').textContent = 'Read cars'; return showResult({ok: false, text: r.error}); }
+    vip.cars = r.data.cars || []; vip.cpm2 = r.data.cpm2 || []; vip.donor = null; vip.targets = new Set(); vip.step = 2;
+    vipList(); $('go').textContent = 'Transfer';
+    if (!vip.cars.length) { vip.step = 1; $('go').textContent = 'Read cars'; showResult({ok: false, text: 'No transferable cars found.'}); }
+    return;
   }
+  const d = vip.cars.find(x => x.index === vip.donor);
+  if (!d) return toast('Pick a CPM1 car first', true);
+  if (!vip.targets.size) return toast('Pick at least one CPM2 car', true);
+  if (vip.targets.size > 20) return toast('Max 20 target cars', true);
+  busy(true, 'Transferring…');
+  const r = await call('vip/transfer', {...c, donor_index: d.index, target_indices: [...vip.targets], cross: d.status === 'cross'});
+  busy(false); $('go').textContent = 'Transfer';
+  if (!r.ok) return showResult({ok: false, text: r.error});
+  showResult({ok: true, text: `Transfer finished\nSent: ${r.data.sent}\nVerified: ${r.data.verified}\nTotal: ${r.data.total}`});
+}
+function vipList() {
+  const tag = {same: 'same car', cross: 'other car', novinyl: 'no vinyl'};
+  let h = '<label class="l">Copy from this CPM1 car</label><div class="rows">' + vip.cars.map(c =>
+    `<label class="rw${c.status === 'novinyl' ? ' dis' : ''}${vip.donor === c.index ? ' on' : ''}"><input type="radio" name="donor" value="${c.index}"${c.status === 'novinyl' ? ' disabled' : ''}${vip.donor === c.index ? ' checked' : ''}><span>${esc(c.name)}</span><small>${tag[c.status] || c.status}</small></label>`).join('') + '</div>';
+  const d = vip.cars.find(x => x.index === vip.donor);
+  if (d) {
+    const list = d.status === 'same' ? vip.cpm2.filter(t => (d.targets || []).includes(t.index)) : vip.cpm2;
+    h += `<label class="l">${d.status === 'same' ? 'Matching CPM2 cars' : 'Send to these CPM2 cars (max 20)'}</label><div class="rows">` + (list.length ? list.map(t =>
+      `<label class="rw${vip.targets.has(t.index) ? ' on' : ''}"><input type="checkbox" data-t="${t.index}"${vip.targets.has(t.index) ? ' checked' : ''}><span>${esc(t.name)}</span><small>#${t.index}</small></label>`).join('') : '<div class="desc">No cars available.</div>') + '</div>';
+  }
+  $('vipList').innerHTML = h;
+}
+$('sForm').addEventListener('change', e => {
+  if (cur?.custom !== 'vip') return;
+  if (e.target.name === 'donor') {
+    vip.donor = Number(e.target.value);
+    const d = vip.cars.find(x => x.index === vip.donor);
+    vip.targets = new Set(d && d.status === 'same' ? d.targets : []);
+    vipList();
+  } else if (e.target.dataset.t !== undefined) {
+    const n = Number(e.target.dataset.t);
+    e.target.checked ? vip.targets.add(n) : vip.targets.delete(n);
+    e.target.closest('.rw').classList.toggle('on', e.target.checked);
+  }
+});
 
-  // Send to bot via Telegram sendData
-  try {
-    if (tg && tg.sendData) {
-      tg.sendData(JSON.stringify(payload));
-      closePanel();
-      showToast('✅ Sent to bot!', 'success');
-    } else {
-      // Fallback: show what would be sent (for testing outside Telegram)
-      closePanel();
-      showToast('⚠️ Open in Telegram to use', 'info');
-      console.log('[Mini App] Would send:', payload);
+/* ══ EFFECTS (JS) ══ */
+const R = document.documentElement;
+let autoFx = false;
+function applyFx() { const st = store.get('fx'); const on = st === 'on' || (st !== 'off' && autoFx); R.classList.toggle('fx', on); $('fxb')?.classList.toggle('on', on); }
+function toggleFx() { const on = !R.classList.contains('fx'); store.set('fx', on ? 'on' : 'off'); applyFx(); toast(on ? 'Effects on' : 'Effects off'); }
+/* FPS guard: effects switch on if the phone is smooth, and off if it ever lags (unless you chose manually with ✨ FX) */
+(function () {
+  let n = 0, t0 = 0, on = false, low = 0, dead = false, T0 = 0;
+  function fr(t) {
+    if (dead) return; if (!T0) T0 = t; if (t - T0 > 10000) return; if (!t0) t0 = t; n++;
+    if (t - t0 >= 1000) {
+      const f = n * 1000 / (t - t0); n = 0; t0 = t;
+      if (!on) { if (f >= 50) { on = true; autoFx = true; applyFx(); } }
+      else if (f < 42) { if (++low >= 2) { on = false; dead = true; autoFx = false; applyFx(); } } else low = 0;
     }
-  } catch(e) {
-    showToast('❌ ' + e.message, 'error');
+    requestAnimationFrame(fr);
   }
-}
-
-/* ── TOAST ── */
-function showToast(msg, type = 'info') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast ' + type + ' show';
-  setTimeout(() => t.classList.remove('show'), 2800);
-}
-
-/* ── HELP ACCORDION ── */
-function toggleHelp(el) {
-  el.classList.toggle('open');
-}
-
-/* ── SIMULATE STATS (in real use, these come from bot via initData) ── */
-(function initStats() {
-  // These would be populated from tg.initDataUnsafe or a bot API call
-  document.getElementById('statRuns').textContent = '—';
-  document.getElementById('statCoins').textContent = '—';
-  document.getElementById('statAccess').textContent = user ? '✓' : '—';
+  setTimeout(() => requestAnimationFrame(fr), 1400);
 })();
+applyFx();
+/* floating dots */
+(function () { const pt = $('pt'); for (let i = 0; i < 12; i++) { const d = document.createElement('i'); d.style.left = (Math.random() * 100) + '%'; d.style.setProperty('--dx', ((Math.random() - .5) * 60) + 'px'); d.style.animationDuration = (9 + Math.random() * 9) + 's'; d.style.animationDelay = (-Math.random() * 14) + 's'; d.style.width = d.style.height = (2 + Math.random() * 2.5) + 'px'; pt.appendChild(d); } })();
+/* typewriter greeting */
+(function () { const el = $('name'), t = el.textContent; el.textContent = ''; el.classList.add('cur'); let i = 0; setTimeout(function k() { el.textContent = t.slice(0, ++i); if (i < t.length) setTimeout(k, 55); else setTimeout(() => el.classList.remove('cur'), 900); }, 500); })();
+/* 3D tilt on press */
+(function () {
+  const g = $('grid'); let el = null;
+  g.addEventListener('animationend', e => { if (e.animationName === 'up' && e.target.classList.contains('item') && !e.target.classList.contains('vip')) e.target.classList.add('done'); });
+  g.addEventListener('pointerdown', e => { const b = e.target.closest('.item'); if (b && b.classList.contains('done')) el = b; });
+  g.addEventListener('pointermove', e => { if (!el) return; const r = el.getBoundingClientRect(), dx = (e.clientX - r.left) / r.width - .5, dy = (e.clientY - r.top) / r.height - .5; el.style.transform = 'perspective(520px) rotateX(' + (-dy * 14).toFixed(1) + 'deg) rotateY(' + (dx * 14).toFixed(1) + 'deg) scale(.965)'; });
+  const end = () => { if (el) { el.style.transform = ''; el = null; } };
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => g.addEventListener(t, end));
+})();
+/* touch spotlight + ripple + haptic */
+$('grid').addEventListener('pointerdown', e => {
+  const b = e.target.closest('.item'); if (!b) return;
+  const r = b.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top;
+  b.style.setProperty('--mx', px + 'px'); b.style.setProperty('--my', py + 'px');
+  const d = document.createElement('span'); d.className = 'rip'; d.style.left = px + 'px'; d.style.top = py + 'px'; b.appendChild(d); setTimeout(() => d.remove(), 650);
+  try { tg?.HapticFeedback?.impactOccurred('light'); } catch (e) {}
+});
+/* swipe down to close the sheet */
+(function () {
+  const sh = $('sheet'); let y0 = null, dy = 0;
+  sh.addEventListener('touchstart', e => { if (sh.scrollTop > 0 || e.target.closest('input,textarea,select')) return; y0 = e.touches[0].clientY; dy = 0; sh.style.transition = 'none'; }, {passive: true});
+  sh.addEventListener('touchmove', e => { if (y0 === null) return; dy = Math.max(0, e.touches[0].clientY - y0); sh.style.transform = 'translateY(' + dy + 'px)'; }, {passive: true});
+  sh.addEventListener('touchend', () => { if (y0 === null) return; sh.style.transition = ''; sh.style.transform = ''; if (dy > 90) closeSheet(); y0 = null; });
+})();
+/* press animation on the main button */
+$('go').addEventListener('click', () => { $('go').classList.remove('sent'); void $('go').offsetWidth; $('go').classList.add('sent'); });
+
+/* ── access check ── */
+if (!tg?.initData) banner('Open this panel from inside Telegram.');
+else if (!BASE && location.protocol !== 'http:' && location.protocol !== 'https:') banner('Server address missing.');
+else fetch(BASE + '/api/status', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({initData: tg.initData})})
+  .then(r => r.json()).then(d => { if (d.error) banner(d.error); else if (!d.has_access) banner("You don't have access yet. Contact the owner."); })
+  .catch(() => banner('Cannot reach the bot server.'));
 </script>
-</body>
-</html>
+</body></html>
